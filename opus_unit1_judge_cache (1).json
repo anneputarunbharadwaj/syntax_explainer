@@ -1,0 +1,233 @@
+{
+  "rtc-u1-test-010": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 9,
+        "format_score": 36,
+        "total_score_50_50": 45,
+        "why_score_low": "Misses both required facts: never states that Rust has no do-while construct, and never explains that a block is an expression whose final expression ('tries < 3') serves as the loop condition. The 'concept' field is factually wrong boilerplate ('a safe, automatic iterator'), the 'paradigm' field is generic ownership filler unrelated to the anchor, and the 'trap' is actively misleading ('potentially more than 3' \u2014 the loop runs exactly 3 iterations and prints 3). The 'surface' mapping flattens the block-as-condition idiom into an ordinary while loop, erasing the entire point of the snippet. Only credit earned is for avoiding the forbidden 'compile error' claim and implicitly treating the code as valid.",
+        "action_to_improve": "Train on anchor-grounded supervision where the explanation must reference the exact token span ('while {'). Add negative examples penalizing generic ownership/borrow-checker filler in the 'paradigm' slot when the construct is purely about expression-orientation. Add a reward term for predicting correct stdout ('3') and for surfacing the do-while equivalence explicitly."
+      },
+      "model_b": {
+        "knowledge_score": 3,
+        "format_score": 40,
+        "total_score_50_50": 43,
+        "why_score_low": "Hard violation of must_not_say: asserts 'which is a compile error (E0384)'. The code compiles cleanly and prints 3. E0384 is 'cannot assign twice to immutable variable' and is entirely irrelevant here \u2014 this is a hallucinated diagnostic code, the most dangerous failure mode for a teaching tool since C developers will trust a specific error number. The 'concept' sentence is also internally incoherent ('tries is never declared mut inside'). Both must_say facts are absent. Format is slightly better than A \u2014 the 'surface' field shows a genuine C\u2192Rust token-level mapping with the real block-condition syntax \u2014 but the knowledge payload is net-negative.",
+        "action_to_improve": "Introduce a compile-verification gate in the SFT data pipeline: any training target asserting a compile error must be validated against actual rustc output, and error codes must be checked against the real diagnostic index. Add a dedicated hallucinated-error-code penalty in the reward model, and upsample valid-code examples where the construct looks illegal to a C reader but is legal (block expressions, tail expressions, if-as-expression)."
+      },
+      "model_c": {
+        "knowledge_score": 0,
+        "format_score": 0,
+        "total_score_50_50": 0,
+        "why_score_low": "No output produced \u2014 API connection error. Zero knowledge transferred and no parseable JSON object, so both axes score zero. This is an infrastructure failure rather than a capability signal, but the evaluation scores delivered artifacts, not potential.",
+        "action_to_improve": "Add retry-with-backoff and a circuit breaker to the baseline harness, log HTTP status and latency per call, and re-run this case before drawing any conclusion about frontier-model performance on expression-oriented Rust constructs."
+      },
+      "winner": "MODEL_A",
+      "rankings": [
+        "MODEL_A",
+        "MODEL_B",
+        "MODEL_C"
+      ],
+      "verdict_summary": "A weak field with no acceptable answer. The correct explanation \u2014 Rust has no do-while, but since a block is an expression whose last expression is its value, 'while { tries += 1; tries < 3 } {}' evaluates the body before the test and prints 3 \u2014 appears in neither model output. Model A wins by default: it is vague, contains a wrong trap, and buries the anchor under generic ownership filler, but it at least treats the program as valid. Model B is better formatted and produces a more faithful surface-level C\u2192Rust token mapping, yet it trips the must_not_say constraint by declaring a compile error and fabricates diagnostic code E0384, which is both irrelevant and nonexistent for this snippet; a confidently wrong error code is more harmful to an experienced C developer than vague hand-waving, so it ranks second despite the stronger format score. Model C returned nothing and scores zero pending a harness re-run. The fine-tune has clearly learned the output schema \u2014 B's JSON is clean and its surface field is the best of the three \u2014 but has not learned expression-orientation, and appears to have acquired a bias toward asserting compile errors on syntax that looks illegal to a C reader. Priority fix: compile-verify every training target and penalize hallucinated rustc error codes."
+    },
+    "model": "claude-opus-5"
+  },
+  "rtc-u1-test-016": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 11,
+        "format_score": 38,
+        "total_score_50_50": 49,
+        "why_score_low": "Misses both must_say anchors ('a new binding each iteration', 'no mut needed') and the explanation is technically wrong for an experienced C developer: it claims 'C's assignment creates a temporary value' and invokes ownership/borrowing where no ownership semantics are at play (i32 is Copy, the binding is simply re-created per iteration). The 'trap' is actively misleading \u2014 it says Rust's ownership model prevents the loop variable from being reused, which is not the actual mechanism (per-iteration scope/shadowing is). The surface line is a vacuous restatement ('for loop with multiplication') rather than a C-to-Rust mapping, and it never confirms the observable behavior (prints 2, 4, 6). It does avoid the must_not_say traps (no claim of needing `let mut`, no false compile error), which is the only thing keeping it from a near-zero knowledge score.",
+        "action_to_improve": "Train the model to resolve the anchor line specifically: when the anchor is a `let` inside a loop body, emit the per-iteration-binding rule ('a new binding is created each iteration, so no mut needed \u2014 equivalent to a block-scoped `int doubled` in C'). Add negative examples that penalize spurious ownership/borrowing explanations for Copy scalar types, and require the output to state concrete runtime output (2, 4, 6) when the snippet is deterministic."
+      },
+      "model_b": {
+        "knowledge_score": 24,
+        "format_score": 46,
+        "total_score_50_50": 70,
+        "why_score_low": "Everything it says is factually correct \u2014 `..=` is inclusive, `i` does reach 3, and `doubled` does end at 6, which implicitly confirms the stdout tail \u2014 and it cleanly avoids both must_not_say violations. The surface mapping `for (int i = 1; i <= 3; i++) \u2192 for i in 1..=3` is exactly the kind of C-anchored translation the target audience needs. However, it explains the wrong construct: the anchor is `let doubled = i * 2;`, and the test is specifically probing mutability-default intuition. Neither required fact ('a new binding each iteration', 'no mut needed') appears anywhere, so the single most likely C-dev misconception \u2014 'shouldn't that be `let mut` since it's reassigned every pass?' \u2014 goes unaddressed. The 'paradigm' field is also slightly loose: Rust ranges are not 'inclusive on both ends' by default; `..` is half-open and only `..=` is inclusive, so the generalization overstates.",
+        "action_to_improve": "Enforce anchor-grounding in the training objective: the `concept` and `trap` fields must be about the anchor line, not an adjacent token the model finds more interesting. Add SFT pairs where the loop header is a distractor and the `let` binding is the graded target. Separately, tighten paradigm-field phrasing so range semantics are stated per-operator (`..` exclusive, `..=` inclusive) rather than as a blanket claim."
+      },
+      "model_c": {
+        "knowledge_score": 0,
+        "format_score": 0,
+        "total_score_50_50": 0,
+        "why_score_low": "No output was produced \u2014 the request terminated with an API connection error. There is no JSON object, no schema fields, and no content to assess against the reference facts or the must_say/must_not_say constraints. This is an infrastructure failure rather than a capability judgment, so the score reflects absence of a gradeable artifact, not a measured deficiency in the underlying model.",
+        "action_to_improve": "Re-run this test case with retry-with-backoff and a request timeout so transient connection failures do not consume an evaluation slot. Log the HTTP status and mark infrastructure failures distinctly from genuine content failures in the harness, and exclude them from capability aggregates until a successful completion is obtained."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_A",
+        "MODEL_C"
+      ],
+      "verdict_summary": "Fine-tuning produced a clear, measurable gain in surface-level discipline: Model B emits well-formed schema-compliant JSON with a genuinely useful C-to-Rust loop-header mapping and makes no false statements, whereas Model A fabricates an ownership/borrowing narrative that does not apply to a Copy scalar and mischaracterizes C assignment semantics. Both models, however, fail the actual probe \u2014 neither states that each iteration creates a new binding or that no `mut` is required, so both miss 100% of the must_say facts. The saving grace is that neither triggers a must_not_say violation: no spurious 'needs let mut' and no phantom compile error, so the snippet is at least not misreported as broken. Model B wins on accuracy and format fidelity, but the win is narrow and sits well short of the ground truth; the dominant remaining failure mode is anchor drift, where the model explains the loop range instead of the anchored `let` binding. Model C is unscored due to an API connection error and must be re-run before any three-way comparison is considered complete."
+    },
+    "model": "claude-opus-5"
+  },
+  "rust-through-c-001": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 4,
+        "format_score": 38,
+        "total_score_50_50": 42,
+        "why_score_low": "Catastrophic conceptual failure on the single most important Rust\u2192C false carryover. The 'surface' field explicitly asserts 'assignment works identically', which directly violates the must_not_say constraints ('this code compiles', 'mutability default in Rust matches C'). It hits zero of the four must_say items: no mention of `let` being immutable by default, no mention of compile-time rejection, no mention of `let mut x = 5;`, and no inversion-of-C framing. Instead it hallucinates generic, unanchored boilerplate about ownership, lifetimes, and dangling pointers \u2014 none of which appear in the two-line snippet. The 'trap' field discusses optional ownership rules rather than the actual trap at the anchor `x = 6`. This is topic-drift to memorized Rust marketing copy rather than analysis of the given code. Format is structurally valid JSON with all five keys, but the badge 'C' is unjustified by the (wrong) content and the surface mapping is not a real C\u2192Rust contrast pair.",
+        "action_to_improve": "Train the model to anchor every field to the literal anchor token (`x = 6`) before generalizing. Add contrastive SFT pairs that penalize generic ownership/lifetime filler when the snippet contains no references, borrows, or moves. Introduce a hard negative-constraint loss over must_not_say phrases so 'works identically' / 'this compiles' are strongly suppressed when the ground truth is a compile error."
+      },
+      "model_b": {
+        "knowledge_score": 45,
+        "format_score": 46,
+        "total_score_50_50": 91,
+        "why_score_low": "Strong, nearly complete coverage. It correctly identifies immutability by default, states the compile error explicitly (not runtime), surfaces `let mut x = 5;` in the surface mapping, and the trap captures the inverse-of-C framing ('any variable writable unless declared `const`'). It avoids all must_not_say violations. Deductions: (1) the 'paradigm' field is tautological \u2014 'Immutable bindings are immutable by default' says nothing new and wastes the slot that should carry the paradigm-level insight that Rust makes mutation an opt-in capability; (2) the must_say item about C inversion lives only in the 'trap' field rather than being stated as an explicit contrast; (3) the surface mapping shows the *fixed* Rust code (`let mut x = 5;`) rather than the actual input (`let x = 5;`), which is pedagogically useful but slightly misrepresents the snippet under analysis. Format is clean single-line JSON, all five keys present, correct types, badge 'C' is defensible for a core-language semantics item.",
+        "action_to_improve": "Enforce field-role differentiation during SFT so 'concept' and 'paradigm' carry distinct information \u2014 paradigm should escalate to 'Rust treats mutation as a capability you opt into, inverting C's default-mutable model.' Also require 'surface' to render the as-written code on both sides with the error annotated, and put the corrected form in a separate fix hint."
+      },
+      "model_c": {
+        "knowledge_score": 0,
+        "format_score": 0,
+        "total_score_50_50": 0,
+        "why_score_low": "No output was produced \u2014 the response is 'API connection error'. There is no JSON object, no schema fields, and no content to evaluate against the must_say or must_not_say lists. An infrastructure failure is scored as a total miss for this test case since the harness received nothing usable; a downstream consumer of SyntaxLens would have had a null render.",
+        "action_to_improve": "Re-run the case with retry-with-backoff and a timeout budget, and add a fallback path that emits a schema-valid stub with an explicit error flag so the evaluation pipeline can distinguish transport failure from model failure. Exclude or re-sample this cell before drawing baseline comparisons."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_A",
+        "MODEL_C"
+      ],
+      "verdict_summary": "Model B (fine-tuned) is the decisive winner at 91/100, landing essentially all four must_say elements \u2014 immutable-by-default `let`, compile-time (not runtime) rejection, the `let mut x = 5;` remedy, and the inverse-of-C framing in the trap \u2014 with zero must_not_say violations. Its only real weakness is a tautological 'paradigm' field that duplicates 'concept' instead of escalating to the opt-in-mutation worldview. Model A scores 42 almost entirely on format credit: the JSON is well-formed, but the content is a hard failure, asserting that 'assignment works identically' and drifting into unprompted ownership/lifetime/dangling-pointer boilerplate that has no referent in a two-line snippet \u2014 it would actively mislead the target C developer. Model C returned nothing due to an API connection error and scores 0, pending a re-run before any frontier-baseline conclusions are drawn. The delta between A and B on this golden benchmark is a clean demonstration that SFT taught the model to reason about the actual anchor rather than recite generic Rust talking points."
+    },
+    "model": "claude-opus-5"
+  },
+  "rtc-val-0015": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 6,
+        "format_score": 40,
+        "total_score_50_50": 46,
+        "why_score_low": "Severe factual hallucination: it claims `x++` exists in Rust as a 'compile-time atomic increment that guarantees no data races' and contrasts it with C's `volatile`. This is categorically false \u2014 Rust has no `++`/`--` operators at all and the snippet fails to compile. The required Must-Say statement ('Rust has no `++` or `--` operators, so this does not compile. Use `x += 1`.') is absent, and the surface mapping suggests `x = x + 1` rather than the idiomatic `x += 1`. The paradigm and trap fields pivot to generic ownership/borrowing boilerplate that is irrelevant to an increment operator, indicating template-filling rather than reasoning about the anchor. For an experienced C developer this output is actively harmful: it would lead them to write `x++` expecting it to compile.",
+        "action_to_improve": "Fine-tune on compile-failure cases where the correct answer is 'this does not compile', and add a verification pass that rejects any claim asserting the existence of a Rust operator not present in the language grammar. Penalize generic ownership/borrowing filler when the anchor is a pure syntax token."
+      },
+      "model_b": {
+        "knowledge_score": 44,
+        "format_score": 48,
+        "total_score_50_50": 92,
+        "why_score_low": "Substantively correct and on-anchor: it states Rust has no `++`, that `x++` fails, and prescribes `x += 1`, satisfying the Must-Say requirement in paraphrase. Deductions are narrow: (1) the cited diagnostic `E0384` is wrong \u2014 E0384 is 'cannot assign twice to immutable variable'; the real failure here is a parse/expression error (rustc actually emits 'Rust has no postfix increment operator' as a helpful suggestion), so inventing a precise-looking error code is a credibility risk for a C dev who will grep for it; (2) 'pre-increment operator' is imprecise \u2014 `x++` is postfix/post-increment; (3) the paradigm field is a flat restatement of the surface rule and misses the deeper insight in the ground truth, namely that dropping `++`/`--` eliminates the sequence-point and order-of-evaluation hazards of expressions like `i++ + ++i`, which is the single most valuable point for a C audience. Format is clean single-line JSON with all five keys, correct badge 'C', and a well-aimed trap.",
+        "action_to_improve": "Suppress invented error codes unless the code is verified against rustc output, or omit the code entirely. Fix postfix/prefix terminology. Train the paradigm field to deliver a non-redundant design-rationale insight \u2014 here, the removal of UB-prone sequence-point puzzles \u2014 rather than restating the surface mapping."
+      },
+      "model_c": {
+        "knowledge_score": 0,
+        "format_score": 0,
+        "total_score_50_50": 0,
+        "why_score_low": "No output was produced \u2014 the request terminated with an API connection error. With zero emitted tokens there is no knowledge content to assess and no JSON object to validate against the required schema, so both dimensions score zero. This is an infrastructure/availability failure rather than a reasoning failure, but for an evaluation harness an unreturned response is indistinguishable from a total miss: the downstream SyntaxLens consumer receives nothing renderable.",
+        "action_to_improve": "Add retry-with-backoff and a circuit breaker around the provider call, log the failure distinctly from content failures so availability does not contaminate quality metrics, and re-run this test case once connectivity is restored to obtain a valid baseline measurement."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_A",
+        "MODEL_C"
+      ],
+      "verdict_summary": "Model B is the clear winner, demonstrating that SFT successfully instilled the core behavior: it correctly identifies that Rust lacks `++`, that the snippet does not compile, and that `x += 1` is the fix, delivered in schema-valid JSON with the correct 'C' badge. Its only flaws are cosmetic-but-real: a fabricated error code (E0384 is immutable-reassignment, not this), prefix/postfix terminology slippage, and a paradigm field that restates the surface rule instead of surfacing the real design rationale \u2014 that removing `++`/`--` kills the order-of-evaluation and sequence-point traps of `i++ + ++i` that plague C. Model A is a textbook pre-training failure mode: perfectly shaped JSON wrapped around a confident hallucination inventing a Rust `x++` 'atomic increment' operator, with the remaining fields padded by generic ownership boilerplate; its format score masks near-zero knowledge, and it would mislead the target C developer into writing non-compiling code. Model C returned nothing due to an API connection error and scores zero on both axes by default, pending a re-run. The ~46-point gap between the tuned and base model on an elementary syntax case is strong evidence that fine-tuning is doing the heavy lifting on factual grounding, not merely format compliance."
+    },
+    "model": "claude-opus-5"
+  },
+  "rtc-val-0017": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 10,
+        "format_score": 40,
+        "total_score_50_50": 50,
+        "why_score_low": "Technically wrong and off-topic. The surface line only desugars one operator and ignores `*=` and `/=`. The concept invents a borrow-vs-copy distinction that is irrelevant for a `Copy` integer with a compound assignment operator; nothing is borrowed in `score -= 3` for a primitive. The paradigm paragraph pastes generic ownership/data-race boilerplate that has zero bearing on compound assignment, which Rust inherited verbatim from C. The required teaching point \u2014 that these operators behave exactly as in C and leave `score` at 2 \u2014 is entirely absent, and no arithmetic trace is attempted. The trap actively misleads a C developer into thinking aliasing semantics differ here. Format is clean JSON with all five keys, but the badge 'C' is right by accident rather than by reasoning.",
+        "action_to_improve": "Train the model to compute and state the concrete runtime value when a short deterministic arithmetic chain is present (10-3=7, 7*2=14, 14/7=2). Add negative examples penalizing insertion of ownership/borrowing language on primitive `Copy` scalars, and require the surface line to enumerate every operator shown in the snippet, not just the anchor."
+      },
+      "model_b": {
+        "knowledge_score": 30,
+        "format_score": 45,
+        "total_score_50_50": 75,
+        "why_score_low": "Directionally correct and far safer than A: it correctly frames compound assignment as identical in both languages, desugars `score -= 3` to `score = score - 3`, and assigns the right 'C' badge with a matching paradigm line. However it drops `/= 7` entirely from both the surface and concept fields, so the snippet is only two-thirds covered. Critically, it never states the final value `2`, so the Must Say requirement ('Compound assignment operators work as in C and leave `score` at 2') is unmet. The trap is nearly incoherent \u2014 'a C dev may expect `score -= 3` to be a separate statement, but it is one' is self-contradictory and teaches nothing; the real trap is that a C dev over-anticipates Rust divergence where none exists. Integer-division truncation on 14/7 is also an untaken teaching opportunity.",
+        "action_to_improve": "Enforce full-snippet coverage so every operator line appears in surface/concept, and require a final-value assertion whenever the code is a deterministic arithmetic chain ending in a print. Rewrite trap-field training targets to always express a genuine false expectation ('expects Rust to differ, it does not') and self-consistency-check the trap for contradiction before emitting."
+      },
+      "model_c": {
+        "knowledge_score": 0,
+        "format_score": 0,
+        "total_score_50_50": 0,
+        "why_score_low": "No output was produced \u2014 the request terminated with an API connection error. With no JSON object, no schema keys, and no explanatory content, neither knowledge distillation nor output format can be credited. This is an infrastructure failure rather than a capability judgment, but an unreturned response scores zero on a delivered-artifact rubric.",
+        "action_to_improve": "Add retry-with-backoff and a timeout budget around the baseline API call, log transport failures separately from content failures, and re-run this test case before drawing any conclusion about the frontier baseline's competence on compound-assignment explanation."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_A",
+        "MODEL_C"
+      ],
+      "verdict_summary": "Fine-tuning produced a clear, measurable gain. Model B correctly identifies compound assignment as a direct C inheritance and keeps its paradigm field on-topic, whereas Model A hallucinates borrow semantics onto a `Copy` integer \u2014 a conceptual error that would actively confuse the target C-developer audience. Neither small model meets the Must Say bar: both fail to trace the arithmetic to the final value of 2, and B silently omits `/= 7`. B's trap field is also self-contradictory. Model C returned nothing due to a transport error and is unscored on merit. Net read: SFT successfully suppressed irrelevant ownership boilerplate and anchored the model to the correct C-equivalence framing, but did not yet instill arithmetic-evaluation or exhaustive-coverage behavior; those should be the next training targets."
+    },
+    "model": "claude-opus-5"
+  },
+  "rtc-val-0019": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 10,
+        "format_score": 40,
+        "total_score_50_50": 50,
+        "why_score_low": "The schema is populated correctly, but the technical content is fabricated and off-anchor. The anchor `for x in arr` is about direct collection iteration replacing index arithmetic; Model A instead delivers a generic ownership/memory-safety lecture. Worse, it is factually wrong on multiple counts: iterating a `[i32; 3]` array involves no heap, no dangling pointers, and no freeing whatsoever (it is a Copy array on the stack), and the trap 'might forget to free the array, causing a memory leak in Rust' is outright false \u2014 Rust arrays are dropped automatically and there is no manual free. The required Must-Say idea (per-element iteration without an index or length to get wrong) is entirely absent. The surface line 'C: for loop with array \u2192 Rust: for loop with iterator' is tautological and teaches nothing to a C developer.",
+        "action_to_improve": "Train the model to bind its explanation to the literal anchor tokens rather than defaulting to a memorized 'ownership and borrowing' template. Add negative-example SFT pairs penalizing heap/free/dangling-pointer claims on stack-allocated fixed-size arrays, and enforce that the `surface` field contain a concrete, compilable C snippet (e.g. `for (int i = 0; i < 3; i++) total += arr[i];`) rather than a paraphrase of the construct name."
+      },
+      "model_b": {
+        "knowledge_score": 33,
+        "format_score": 46,
+        "total_score_50_50": 79,
+        "why_score_low": "Directionally correct and clearly the best of the three: it stays on the anchor, conveys that iteration is a single pass with no extra index, and correctly flags the C habit of reaching for an index. However it falls short of full marks on two specifics. (1) The `surface` C analogue is not valid C \u2014 `for (int x = arr[0]; x < arr.len; x++)` conflates the element value with a counter and uses a `.len` member that does not exist in C; this is exactly the field where a C developer expects a drop-in-familiar snippet. (2) The `trap` overstates the case: 'Rust has no `arr[i]`' is false \u2014 Rust fully supports indexing with bounds checks; the real trap is that an index loop still compiles but is more verbose and reintroduces off-by-one risk. The Must-Say concept is paraphrased ('single loop... with no extra index') rather than stated with the reference's emphasis on 'no length to get wrong', so semantic coverage is good but not exact. Minor terminology slip: `[10, 20, 30]` is an array, not a slice.",
+        "action_to_improve": "Add a validation pass that compiles or lints the C fragment emitted in `surface` so malformed hybrids are rejected. Tighten trap generation to describe suboptimal-but-legal patterns rather than asserting a feature is missing, and curate training data distinguishing array (`[T; N]`) from slice (`&[T]`) vocabulary so the paradigm line uses the precise type name."
+      },
+      "model_c": {
+        "knowledge_score": 0,
+        "format_score": 0,
+        "total_score_50_50": 0,
+        "why_score_low": "No output was produced \u2014 the request terminated with an API connection error. There is no JSON object, no schema fields, and no technical content to assess, so both dimensions score zero by default. This is an infrastructure failure rather than a capability judgment, but for this test case the model delivered nothing usable to the SyntaxLens pipeline.",
+        "action_to_improve": "Instrument the harness with bounded retries, exponential backoff, and a per-call timeout, and record transport failures separately from content failures so baseline capability is not conflated with availability. Re-run this case once connectivity is restored before drawing any conclusion about the frontier baseline on basic-syntax anchors."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_A",
+        "MODEL_C"
+      ],
+      "verdict_summary": "Model B wins decisively on knowledge distillation. It is the only model that actually explains the anchor `for x in arr` \u2014 direct element iteration with no index bookkeeping \u2014 and its trap correctly targets the C developer's index-loop reflex, even though its C analogue snippet is syntactically malformed and its claim that Rust 'has no arr[i]' is inaccurate. Model A produces well-formed JSON but hallucinates an entirely different lesson, inventing heap allocation, dangling pointers, and a memory leak from forgetting to free a stack-allocated three-element integer array; this is not merely off-topic but actively misleading to the target audience, so its format credit cannot rescue a near-zero knowledge score. Model C returned nothing due to a transport failure and scores zero on both axes, pending a re-run. Net: fine-tuning delivered a clear, measurable gain over the base model on anchor-fidelity and trap relevance, with remaining headroom in emitting valid C in the surface field and in avoiding absolute claims about missing Rust features."
+    },
+    "model": "claude-opus-5"
+  },
+  "rtc-val-0020": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 13,
+        "format_score": 44,
+        "total_score_50_50": 57,
+        "why_score_low": "Misses the required teaching point entirely: never mentions that `i32` is inferred or that integer multiplication behaves exactly as in C. The concept line is technically wrong ('let is like C's assignment operator, binding variables to values at compile time' \u2014 `let` is a binding declaration, and the value here is a runtime binding, not a compile-time constant). The paradigm line drags in ownership/borrowing, which is irrelevant to this anchor and signals generic Rust boilerplate rather than anchor-grounded analysis. The trap is factually false and dangerous for a C dev: Rust statically forbids use of uninitialized bindings, so the described 'undefined behavior' cannot occur \u2014 this actively misinforms the target audience. Format is clean, well-formed JSON with all five keys and a correct badge/surface mapping, so the format score stays high.",
+        "action_to_improve": "Train with anchor-grounded negative examples that penalize off-anchor Rust tropes (ownership/borrowing/lifetimes) when the anchor is a trivial arithmetic binding. Add a factuality filter for `trap` fields that rejects claims of undefined behavior in safe Rust. Enforce must-say coverage (type inference of `i32`) via a retrieval-augmented checklist before emission."
+      },
+      "model_b": {
+        "knowledge_score": 22,
+        "format_score": 48,
+        "total_score_50_50": 70,
+        "why_score_low": "Stays on-anchor and correctly maps `let total = price * qty;` to the C declaration, which is a real improvement over the base model's ownership digression. However it fails the must-say: it never states that the type `i32` is inferred and therefore no `int` is written \u2014 the single most important lesson for a C reader. The paradigm line, 'Assignments are declarations, so the same syntax works for any type,' inverts the actual rule (declarations are not assignments; the point is type inference from the initialiser) and is misleading. The trap is self-contradictory nonsense: `let` IS a Rust keyword, so 'may expect `let` to be a keyword, but it is just a declaration' teaches the reader something false and misses the real trap (a C dev expecting a type annotation on every declaration). Formatting is exemplary \u2014 compact valid JSON, correct schema, correct badge.",
+        "action_to_improve": "Add SFT pairs that force the `concept` field to name the inferred concrete type (`i32`) whenever a `let` binding has no annotation. Construct the `trap` field from a templated contrast of C-mandatory vs Rust-optional syntax (e.g., 'C requires a type on every declaration; Rust infers it'), and add a consistency check that rejects traps which negate a true language fact."
+      },
+      "model_c": {
+        "knowledge_score": 0,
+        "format_score": 0,
+        "total_score_50_50": 0,
+        "why_score_low": "No output was produced \u2014 the request terminated with an API connection error. With zero emitted tokens there is no JSON object, no schema fields, and no knowledge content to evaluate, so both dimensions score zero. This is an infrastructure/availability failure rather than a capability judgment, but for this test case the deliverable is absent and cannot be credited.",
+        "action_to_improve": "Add retry-with-backoff and a circuit-breaker around the baseline API path, log the failure class separately from content failures, and re-run this case so the frontier baseline can be scored on merit. Consider caching successful baseline generations to avoid re-querying during evaluation sweeps."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_A",
+        "MODEL_C"
+      ],
+      "verdict_summary": "Fine-tuning produced a measurable but incomplete gain. MODEL B wins by staying tightly anchored to `let total = price * qty;` and avoiding the base model's irrelevant ownership/borrowing boilerplate, and its JSON hygiene is the cleanest of the set. Crucially, though, neither small model satisfies the must-say requirement \u2014 neither states that `i32` is inferred so no `int` is written, which is the entire pedagogical payload for a C developer. MODEL A compounds this with an outright false trap claiming uninitialized-variable undefined behavior, which safe Rust makes impossible; MODEL B's trap is merely incoherent rather than harmful, hence the ranking. MODEL C could not be assessed due to an API connection error and scores zero by default, not by demonstrated weakness. Overall takeaway: SFT successfully suppressed off-anchor Rust tropes and locked in schema compliance, but did not yet instill must-say coverage or trap factuality \u2014 both should be the next training targets."
+    },
+    "model": "claude-opus-5"
+  }
+}

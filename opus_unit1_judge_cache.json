@@ -1,0 +1,101 @@
+{
+  "rtc-u1-test-017": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 13,
+        "format_score": 41,
+        "total_score_50_50": 54,
+        "why_score_low": "Knowledge is largely incorrect and evasive. It never states the observable output ('prints 2 1') and never states the required fact that BOTH bindings must be declared `let mut` \u2014 the single most important teaching point for the anchor. Worse, it hallucinates irrelevant and wrong systems semantics: destructuring assignment of two `i32` bindings has nothing to do with 'pointer swap', 'memory management', or 'dangling references'. It also mischaracterizes the construct as 'swap two values in a tuple' when in fact no tuple value is materially swapped \u2014 it is a destructuring assignment where the RHS tuple `(b, a)` is constructed from copies and then pattern-destructured into the LHS place expressions. The trap field invents a non-existent C-dev failure mode instead of the real one (forgetting `mut`, or assuming Rust requires a temp/`std::mem::swap`). It avoids the forbidden strings only by accident, not by understanding.",
+        "action_to_improve": "Train on examples that force the model to ground every field in the reference_facts block: surface must echo the exact literal stdout ('2 1'), and concept must name the exact binding requirement (`let mut` on both). Add a negative-reward signal for ownership/borrow-checker/dangling-reference boilerplate injected into Copy-type scalar examples where it is semantically irrelevant. Add a 'trap must be derived from must_say/must_not_say' constraint during SFT data construction."
+      },
+      "model_b": {
+        "knowledge_score": 31,
+        "format_score": 44,
+        "total_score_50_50": 75,
+        "why_score_low": "Correctly captures the critical mutability fact ('the two variables must be `mut` first'), correctly avoids both forbidden claims (no 'needs a temporary variable', no 'compile error'), and the surface mapping is concrete and idiomatic \u2014 it shows the real C idiom next to the real Rust line, which is exactly what an experienced C dev needs. The deduction is for the missing must_say item: it never states that the program prints '2 1', so the reader cannot verify runtime behavior. Secondary issues: the `paradigm` field is a near-duplicate of `concept` (wasted slot \u2014 paradigm should explain WHY Rust permits destructuring assignment to place expressions and why no `std::mem::swap` or temp is needed, unlike C). Also the C comparison 'swap(a, b)' is slightly sloppy, since C cannot swap by value without pointers \u2014 the honest mapping is `swap(&a, &b)` or a three-line temp dance, which would have sharpened the contrast.",
+        "action_to_improve": "Add a hard constraint in the SFT target that the stdout string from reference_facts appears verbatim in one field (preferably `surface` or `concept`). De-duplicate `concept` vs `paradigm` by training paradigm to answer 'why does the language allow this at all' rather than restating the mechanic. Tighten C-side examples so the C snippet is actually compilable/correct (pointer-based swap), which strengthens credibility with the target audience."
+      },
+      "model_c": {
+        "knowledge_score": 0,
+        "format_score": 0,
+        "total_score_50_50": 0,
+        "why_score_low": "No output was produced \u2014 'API connection error'. There is no JSON object, no fields, and no content to evaluate. An unreturned response is an unconditional failure on both axes regardless of the model's latent capability; availability is part of the evaluated system.",
+        "action_to_improve": "Add retry-with-backoff and a circuit-breaker around the baseline API call, log the failure separately from a content failure, and re-run this test case before including Claude Haiku in comparative scoring. Consider caching baseline responses so transient network faults do not void a benchmark run."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_A",
+        "MODEL_C"
+      ],
+      "verdict_summary": "Fine-tuning produced a clear, measurable gain. MODEL B hits one of two must_say items (both bindings must be `mut`), cleanly avoids both must_not_say traps, and delivers a concrete C\u2192Rust surface mapping that an experienced C developer can act on immediately; its only real gap is omitting the literal stdout '2 1' and letting `paradigm` echo `concept`. MODEL A is the classic pre-SFT failure mode: structurally valid JSON wrapped around confident nonsense \u2014 it drags in pointer swaps, memory management, and dangling references for a four-line program over two Copy integers, and misses both must_say facts entirely. MODEL C is unscorable due to an API connection error and should be re-run before any claim is made about frontier-baseline parity. Net read: SFT moved the model from hallucinated ownership boilerplate to grounded, fact-anchored explanation, but output-grounding against reference_facts.stdout is still not enforced and is the highest-value next training target."
+    },
+    "model": "claude-opus-5"
+  },
+  "rust-through-c-001": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 4,
+        "format_score": 38,
+        "total_score_50_50": 42,
+        "why_score_low": "Catastrophic knowledge failure on the single most universal Rust\u2192C false carryover. The `surface` field explicitly asserts 'assignment works identically', which is a direct must_not_say violation (equivalent to 'this code compiles' and 'mutability default in Rust matches C'). It never mentions `let` immutability by default, never mentions the compile-time rejection, and never mentions `let mut`. Instead it hallucinates generic boilerplate about ownership, lifetimes, and dangling pointers that has nothing to do with the anchor `x = 6`. The `trap` field is about ownership rules being optional \u2014 wrong trap entirely. Format is structurally valid JSON with all five required keys and a plausible badge, but the `surface` field violates the C\u2192Rust contrast convention by showing the Rust side as compiling, so format is docked for semantically malformed field content.",
+        "action_to_improve": "The base model is pattern-matching to the Rust 'ownership/borrow-checker' topic prior rather than reading the anchor. Fine-tune with anchor-grounded supervision that forces the explanation to be derived from the specific anchored token (`x = 6`), and add contrastive negative examples where 'assignment works identically' style claims are penalized. Add a validation pass that rejects any output whose `surface` field implies the Rust snippet compiles when the ground truth marks it as a compile error."
+      },
+      "model_b": {
+        "knowledge_score": 45,
+        "format_score": 48,
+        "total_score_50_50": 93,
+        "why_score_low": "Near-complete coverage. It correctly states immutability by default, correctly identifies the failure as a compile error (not runtime), correctly supplies `let mut x = 5;` as the fix in the `surface` field, and the `trap` captures the C inversion ('a C dev expects any variable to be writable unless declared `const`'). Zero must_not_say violations. Minor deductions: the `paradigm` field is tautological and weak ('Immutable bindings are immutable by default') \u2014 it restates `concept` rather than elevating to the paradigm-level insight that Rust makes mutation an opt-in capability, which is the actual expert note. Also, the inverse-of-C framing lives only in `trap` rather than being stated as a first-class paradigm contrast. Format is clean single-line JSON, all keys present, correct badge, correct C\u2192Rust arrow convention in `surface`.",
+        "action_to_improve": "Train the `paradigm` field to carry genuinely higher-altitude content than `concept` \u2014 enforce a non-redundancy constraint during SFT so paradigm articulates the design philosophy (mutation as an opt-in capability, mirroring how Rust treats `unsafe`) rather than paraphrasing the concept line. Add training signal that rewards explicit directional contrast phrasing ('this is the inverse of C') inside `paradigm`."
+      },
+      "model_c": {
+        "knowledge_score": 0,
+        "format_score": 0,
+        "total_score_50_50": 0,
+        "why_score_low": "No output was produced \u2014 the run terminated with an API connection error. There is nothing to evaluate on either knowledge distillation or output format. This is scored as a total failure for this test case rather than being excluded, since availability is part of deployment viability for a frontier-API baseline.",
+        "action_to_improve": "Re-run the test case with retry-with-backoff and a circuit breaker; log transport failures separately from content failures so infrastructure errors do not silently contaminate benchmark aggregates. If the error persists, verify API credentials, rate-limit headroom, and request timeout settings before re-scoring."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_A",
+        "MODEL_C"
+      ],
+      "verdict_summary": "MODEL_B is the decisive winner and demonstrates that SFT successfully installed the core Rust\u2192C immutability lens. It nails all four must_say elements \u2014 `let` is immutable by default, the rejection is at compile time, `let mut x = 5;` is the fix, and the C inversion via `const` \u2014 with no must_not_say violations, delivered in clean schema-conformant JSON. MODEL_A is a textbook pre-training failure mode: it ignores the anchor entirely, reflexively emits generic ownership/lifetime boilerplate, and actively asserts the false carryover it was supposed to debunk ('assignment works identically'), making it worse than useless for an experienced C developer since it confirms the exact misconception. It retains partial credit only for structural JSON validity. MODEL_C produced no output due to an API connection error and scores zero; this case should be re-run before drawing conclusions about the frontier baseline. The delta between A and B on this golden-benchmark case is the strongest signal in the suite that fine-tuning moved the model from topic-level pattern matching to anchor-grounded, misconception-targeted explanation."
+    },
+    "model": "claude-opus-5"
+  },
+  "rtc-val-0017": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 11,
+        "format_score": 42,
+        "total_score_50_50": 53,
+        "why_score_low": "Technically wrong on the core semantics: it claims 'Rust borrows the value, C copies it' for a compound assignment on a plain `let mut i32`, which is nonsense \u2014 no borrow occurs, the integer is `Copy`, and the in-place mutation is identical to C. It also hallucinates an ownership/data-race paradigm lecture that has nothing to do with `score -= 3`, never covers `*= 2` or `/= 7`, and never states the required fact that the operators behave exactly as in C leaving `score` at 2. The trap actively misleads a C developer into believing a borrow is happening. Format is clean valid JSON with all five keys and a correct `C` badge, but the surface line only rewrites the anchor as desugared assignment and omits the rest of the chain.",
+        "action_to_improve": "Train the base model to suppress the reflexive ownership/borrowing boilerplate when the subject is a stack-allocated `Copy` scalar; add negative examples penalizing 'borrow' language on `i32` compound assignment. Enforce coverage of every operator in the snippet and require the concept field to state the concrete end value (2) when the arithmetic is fully determinable."
+      },
+      "model_b": {
+        "knowledge_score": 33,
+        "format_score": 47,
+        "total_score_50_50": 80,
+        "why_score_low": "Directionally correct and free of hallucination \u2014 it correctly identifies compound assignment as C-inherited and desugars `score -= 3` to `score = score - 3` \u2014 but it falls short of the Must Say requirement in two ways: it never traces the arithmetic to the final value `score == 2`, and it silently drops `/= 7` (the one operator where a C dev might actually pause, since integer division truncates 14/7 cleanly here but is the classic trap site). The trap field is the weakest element: 'a C dev may expect `score -= 3` to be a separate statement, but it is one' is self-contradictory and conveys no real pitfall, where the reference trap is simply 'expect differences, but they are the same.' Format is excellent: valid single-line JSON, all five keys present, correct `C` badge, proper `C: ... \u2192 Rust: ...` surface mapping with backticked identifiers.",
+        "action_to_improve": "Add a training constraint that when a snippet performs a deterministic arithmetic sequence, the concept field must report the final computed value. Enforce full operator coverage so `/= 7` is not dropped. Rewrite trap-field supervision for 'identical to C' cases to the canonical pattern 'a C dev may expect a difference, but behavior is unchanged' instead of generating a vacuous or circular statement."
+      },
+      "model_c": {
+        "knowledge_score": 0,
+        "format_score": 0,
+        "total_score_50_50": 0,
+        "why_score_low": "No output was produced \u2014 the request terminated with an API connection error. With zero emitted tokens there is no JSON object, no schema fields, and no explanatory content to assess, so both the knowledge distillation and output format dimensions score zero by default. This is an infrastructure/availability failure rather than a capability judgment, and it should not be read as evidence about the model's underlying competence on this task.",
+        "action_to_improve": "Re-run the case with retry-with-backoff and a hard timeout so transient connection faults do not produce empty records. Log failed calls distinctly from genuine low-quality generations in the eval harness, and exclude or clearly flag infrastructure failures when computing aggregate baseline scores."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_A",
+        "MODEL_C"
+      ],
+      "verdict_summary": "The fine-tuned model wins decisively on this trivially-C-compatible snippet. The target behavior here is restraint \u2014 the correct answer is 'these operators are identical to C, score ends at 2' \u2014 and MODEL B delivers that framing cleanly with a correct `C` badge, valid schema-conformant JSON, and no fabricated Rust-specific machinery. Its shortfalls are completeness rather than correctness: it omits the final value 2 (the explicit Must Say) and drops `/= 7` from its coverage, and its trap field is circular. MODEL A illustrates exactly the failure mode SFT is meant to eliminate: it pattern-matches 'Rust' to 'ownership and borrowing' and asserts that `score -= 3` borrows the value, which is factually false for a `Copy` integer and would actively confuse the target C-developer audience; its clean JSON formatting earns it format credit but cannot rescue a wrong core explanation. MODEL C returned an API connection error and scores zero by default \u2014 an infrastructure failure, not a capability signal, and it should be re-run before any baseline comparison is drawn from this case. Net: fine-tuning converted hallucinated ownership boilerplate into accurate, appropriately-minimal C-equivalence explanation, with remaining headroom in value-tracing and full operator coverage."
+    },
+    "model": "claude-opus-5"
+  }
+}

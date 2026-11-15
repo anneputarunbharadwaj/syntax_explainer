@@ -1,0 +1,68 @@
+{
+  "rtc-u1-test-017": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 12,
+        "format_score": 32,
+        "total_score_50_50": 44,
+        "why_score_low": "It hits neither must_say item. It never states that the program prints '2 1' and never says both bindings must be `let mut`. It also contains factual errors. A swap in C needs no 'explicit memory management'. The claim that Rust 'requires value swapping to avoid dangling references' is invented: integer swapping has nothing to do with dangling references. Calling the construct a 'tuple swap' misses the real concept, which is destructuring assignment. The paradigm field gives a generic ownership/borrowing line unrelated to the anchor. It does avoid both must_not_say items. Format: the JSON is valid and all five keys are present. The surface field, however, has no concrete C or Rust code, and the trap is misleading rather than a real C-developer pitfall.",
+        "action_to_improve": "Train on examples that tie the explanation to the actual anchor. Name it destructuring assignment (stable since Rust 1.59), state the observable output ('prints 2 1'), and state the precondition that both bindings must be `let mut`. Contrast this with C's three-line temp-variable swap. Penalize invented ownership or dangling-reference claims on Copy-type scalar code. Require concrete code snippets in the surface field."
+      },
+      "model_b": {
+        "knowledge_score": 32,
+        "format_score": 42,
+        "total_score_50_50": 74,
+        "why_score_low": "It hits the 'both bindings must be mut' must_say item, both in the concept field and in the trap ('the left side must be writable'). It misses 'prints 2 1' entirely. The C side contains an inaccuracy: C has no built-in `swap`, and a by-value `swap(a, b)` function in C would not swap the caller's variables. The C equivalent needs pointers or a temp variable. It also misses the key teaching point that destructuring assignment swaps in one statement with no temporary. The paradigm field is redundant with the concept field ('same mutability requirement') and adds no paradigm-level insight. It avoids both must_not_say items. Format: valid, compact JSON with concrete code in the surface field, which is the best structure of the three.",
+        "action_to_improve": "Fix the C-side ground truth by using `int t = a; a = b; b = t;` instead of a nonexistent `swap(a, b)`. Always include the program's observable output ('prints 2 1'). Use the paradigm field to name destructuring assignment and explain that it eliminates the explicit temporary. Add SFT examples that require stating stdout whenever the snippet contains println!."
+      },
+      "model_c": {
+        "knowledge_score": 8,
+        "format_score": 25,
+        "total_score_50_50": 33,
+        "why_score_low": "The output is a generic template with no case-specific knowledge. It hits neither must_say item: no '2 1' output and no mention of `mut`. The concept field ('checked at compile-time to enforce safe state transitions') is vague filler. The paradigm field ('memory safety without runtime garbage collection') is a boilerplate Rust slogan unrelated to destructuring assignment. The trap says nothing actionable. The surface field contains the literal placeholder 'C: equivalent construct', which is a failure to produce content. It avoids the must_not_say items only because it says almost nothing. Format: the JSON is valid, but placeholder and templated text in every field undermines the schema's purpose.",
+        "action_to_improve": "Prompt or few-shot it so that it never emits placeholder text. Require a concrete C equivalent (a temp-variable swap) and the exact stdout. Require explicit mention of the mutability precondition. Use a rubric-guided system prompt that lists the facts that must appear: output, mutability, and no temporary needed."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_A",
+        "MODEL_C"
+      ],
+      "verdict_summary": "Model B is the clear winner. It is the only output that hits a must_say item ('both bindings must be mut'), and it gives concrete C and Rust code in the surface field. It is held back by omitting the 'prints 2 1' output, by citing a nonexistent C `swap` that would fail by value anyway, and by a redundant paradigm field. Model A ranks second on format, but it misses both must_say items and invents ownership and dangling-reference claims irrelevant to swapping integers. Model C produced generic template boilerplate, including the literal placeholder 'equivalent construct', with no case-specific facts, so it ranks last. Fine-tuning measurably improved anchor grounding and mutability awareness. Remaining SFT gaps are stating stdout explicitly, naming destructuring assignment, and getting C-side equivalents right. Note: the test header calls the models Qwen 3.5 2B, but the output labels say 4B. This should be reconciled for reporting accuracy."
+    },
+    "model": "claude-opus-5-5"
+  },
+  "rtc-u1-test-022": {
+    "evaluation": {
+      "model_a": {
+        "knowledge_score": 5,
+        "format_score": 22,
+        "total_score_50_50": 27,
+        "why_score_low": "Misses both required facts. It never says the program prints 8, and it never says mutation is confined to the inner block. The concept and paradigm fields talk about ownership, borrowing, and data races, which have nothing to do with a block-scoped mutable counter. The trap is factually wrong: Rust rejects use of an uninitialized variable at compile time, so there is no 'undefined behavior in Rust', and `sq` is initialized here anyway. The surface field is not a C-to-Rust mapping; it repeats the Rust line on both sides. The JSON is valid, but the fields are filler.",
+        "action_to_improve": "Train on examples that tie the explanation to this snippet's actual semantics: block expressions, block-scoped `let mut`, and the immutable outer binding. Require a real C equivalent in `surface`, such as `int sq = 0; while (sq*sq < 50) sq++;`. Penalize generic ownership boilerplate and invented UB claims."
+      },
+      "model_b": {
+        "knowledge_score": 24,
+        "format_score": 42,
+        "total_score_50_50": 66,
+        "why_score_low": "The main failure is a factual error: it says the final value is 7, but the loop exits at 8 (7*7=49 < 50, so `sq` becomes 8, and 64 >= 50 ends the loop). That fails the 'prints 8' requirement. On the positive side, it correctly says the outer `table` is immutable and avoids the must-not-say. The paradigm field hints that the mutable binding is local to the block, which only partly covers 'mutation is confined to the block'. The trap is muddled: in C, an inner block does share outer variables, and `sq` is declared inside the block here anyway. It misses the real C-dev surprise, which is that a Rust block is an expression that yields a value (C has no standard equivalent beyond GNU statement expressions).",
+        "action_to_improve": "Add loop-trace or execution-verified examples to the SFT data so the model computes final values correctly. Teach the block-as-expression idiom explicitly: the mutable state lives and dies inside `{ ... }`, and only its final value is moved into the immutable `table`. Rewrite traps so they target real C-to-Rust mismatches."
+      },
+      "model_c": {
+        "knowledge_score": 8,
+        "format_score": 25,
+        "total_score_50_50": 33,
+        "why_score_low": "The answer is generic template text. The surface field contains the placeholder 'equivalent construct' instead of real C code. The concept field ('checked at compile-time to enforce safe state transitions') and the paradigm field (memory safety without GC) say nothing specific about this code. The trap is circular ('behaves with permissive C semantics'). It never states the output (8) or that mutation is confined to the block. It avoids the must-not-say only because it says almost nothing. The JSON is valid, but the content has little value.",
+        "action_to_improve": "Use a prompt that requires a concrete C translation in `surface`, an explicit statement of program output, and an explanation of the specific Rust construct (a block expression that confines `let mut` and is bound to an immutable `let`). Reject placeholder phrases like 'equivalent construct'."
+      },
+      "winner": "MODEL_B",
+      "rankings": [
+        "MODEL_B",
+        "MODEL_C",
+        "MODEL_A"
+      ],
+      "verdict_summary": "None of the three models hits both must-say facts. Model B is clearly the strongest:\n- It gives a real C-to-Rust surface mapping.\n- It correctly states that `table` is immutable.\n- It partially conveys that the mutable binding is local to the block.\n- However, it gets the output wrong (7 instead of 8), which is a significant correctness error for a code explainer.\n\nModel C (Haiku baseline) produces valid but empty template content with a placeholder surface field. Model A is the weakest: its ownership and borrowing content is irrelevant, its trap invents undefined behavior in Rust, and its surface field is not a C mapping. Fine-tuning clearly improved specificity and format over the base model, but numeric and execution reasoning needs targeted training data.\n\nThe outputs for A and B are labeled '4B' while the task header says '2B'. This scoring treats them as the base and fine-tuned models described."
+    },
+    "model": "claude-opus-5-5"
+  }
+}

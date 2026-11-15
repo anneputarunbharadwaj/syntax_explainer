@@ -1,0 +1,808 @@
+[
+  {
+    "case_id": "rtc-u1-test-001",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let x = 7;\nlet size = 'check: {\n    if x > 5 {\n        break 'check \"big\";\n    }\n    \"small\"\n};\nprintln!(\"{}\", size);",
+    "element": "break 'check \"big\";",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"big\\n\"\n  },\n  \"reference_notes\": \"A labeled block is an expression; `break 'check value` leaves it early with that value, so size is \\\"big\\\". A C dev would reach for goto or a flag variable; this is a structured exit, not a jump.\",\n  \"must_say\": [\n    \"the block produces \\\"big\\\" as its value\",\n    \"it compiles\"\n  ],\n  \"must_not_say\": [\n    \"this is a goto\",\n    \"this is a compile error\"\n  ]\n}",
+    "reference_notes": "A labeled block is an expression; `break 'check value` leaves it early with that value, so size is \"big\". A C dev would reach for goto or a flag variable; this is a structured exit, not a jump.",
+    "must_say": [
+      "the block produces \"big\" as its value",
+      "it compiles"
+    ],
+    "must_not_say": [
+      "this is a goto",
+      "this is a compile error"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: break 'check \\\"big\\\";\", \"concept\": \"In Rust, 'break 'check \\\"big\\\";' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes break 'check \\\"big\\\"; behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: break 'check \"big\";",
+      "concept": "In Rust, 'break 'check \"big\";' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes break 'check \"big\"; behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-002",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let zero = 0;\nlet q = 10 / zero;\nprintln!(\"{}\", q);",
+    "element": "10 / zero",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": false,\n    \"rustc_error\": null,\n    \"runtime\": null,\n    \"stdout\": null\n  },\n  \"reference_notes\": \"rustc can see the divisor is always 0 and rejects the program with a deny-by-default lint (\\\"this operation will panic at runtime\\\"). In C the same division is undefined behaviour at runtime.\",\n  \"must_say\": [\n    \"rejected at compile time\",\n    \"the divisor is known to be zero\"\n  ],\n  \"must_not_say\": [\n    \"it compiles and then crashes\",\n    \"undefined behaviour in Rust\"\n  ]\n}",
+    "reference_notes": "rustc can see the divisor is always 0 and rejects the program with a deny-by-default lint (\"this operation will panic at runtime\"). In C the same division is undefined behaviour at runtime.",
+    "must_say": [
+      "rejected at compile time",
+      "the divisor is known to be zero"
+    ],
+    "must_not_say": [
+      "it compiles and then crashes",
+      "undefined behaviour in Rust"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: 10 / zero\", \"concept\": \"In Rust, '10 / zero' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes 10 / zero behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: 10 / zero",
+      "concept": "In Rust, '10 / zero' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes 10 / zero behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-003",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let role = \"admin\";\nlet level = match role {\n    \"admin\" => 3,\n    \"editor\" => 2,\n    _ => 0,\n};\nprintln!(\"{}\", level);",
+    "element": "\"admin\" => 3,",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"3\\n\"\n  },\n  \"reference_notes\": \"match works on string slices, comparing contents, so this prints 3. C's switch only takes integers, so a C dev would write an if/strcmp chain.\",\n  \"must_say\": [\n    \"match compares the string contents\",\n    \"prints 3\"\n  ],\n  \"must_not_say\": [\n    \"compares pointers\",\n    \"compile error\"\n  ]\n}",
+    "reference_notes": "match works on string slices, comparing contents, so this prints 3. C's switch only takes integers, so a C dev would write an if/strcmp chain.",
+    "must_say": [
+      "match compares the string contents",
+      "prints 3"
+    ],
+    "must_not_say": [
+      "compares pointers",
+      "compile error"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: \\\"admin\\\" => 3,\", \"concept\": \"In Rust, '\\\"admin\\\" => 3,' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes \\\"admin\\\" => 3, behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: \"admin\" => 3,",
+      "concept": "In Rust, '\"admin\" => 3,' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes \"admin\" => 3, behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-004",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let bits = 1u32 << 40;\nprintln!(\"{}\", bits);",
+    "element": "1u32 << 40",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": false,\n    \"rustc_error\": null,\n    \"runtime\": null,\n    \"stdout\": null\n  },\n  \"reference_notes\": \"Shifting a 32-bit value by 40 overflows; with constants rustc rejects it at compile time (arithmetic_overflow lint). In C a shift by the width or more is undefined behaviour.\",\n  \"must_say\": [\n    \"rejected at compile time\",\n    \"the shift amount exceeds the 32-bit width\"\n  ],\n  \"must_not_say\": [\n    \"evaluates to 0\",\n    \"compiles\"\n  ]\n}",
+    "reference_notes": "Shifting a 32-bit value by 40 overflows; with constants rustc rejects it at compile time (arithmetic_overflow lint). In C a shift by the width or more is undefined behaviour.",
+    "must_say": [
+      "rejected at compile time",
+      "the shift amount exceeds the 32-bit width"
+    ],
+    "must_not_say": [
+      "evaluates to 0",
+      "compiles"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: 1u32 << 40\", \"concept\": \"In Rust, '1u32 << 40' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes 1u32 << 40 behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: 1u32 << 40",
+      "concept": "In Rust, '1u32 << 40' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes 1u32 << 40 behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-005",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "fn main() {\n    let base = 10;\n    fn add_base(x: i32) -> i32 {\n        x + base\n    }\n    println!(\"{}\", add_base(1));\n}",
+    "element": "x + base",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": false,\n    \"rustc_error\": \"E0434\",\n    \"runtime\": null,\n    \"stdout\": null\n  },\n  \"reference_notes\": \"A fn declared inside another fn is an ordinary item: it cannot see the enclosing function's locals (E0434). Use a closure, `let add_base = |x| x + base;`, to capture `base`.\",\n  \"must_say\": [\n    \"an inner fn cannot capture local variables\",\n    \"compile error E0434\",\n    \"use a closure instead\"\n  ],\n  \"must_not_say\": [\n    \"prints 11\"\n  ]\n}",
+    "reference_notes": "A fn declared inside another fn is an ordinary item: it cannot see the enclosing function's locals (E0434). Use a closure, `let add_base = |x| x + base;`, to capture `base`.",
+    "must_say": [
+      "an inner fn cannot capture local variables",
+      "compile error E0434",
+      "use a closure instead"
+    ],
+    "must_not_say": [
+      "prints 11"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: x + base\", \"concept\": \"In Rust, 'x + base' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes x + base behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: x + base",
+      "concept": "In Rust, 'x + base' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes x + base behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-006",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let n: i64 = 3;\nif n as u32 < 5 {\n    println!(\"small\");\n}",
+    "element": "n as u32 < 5",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": false,\n    \"rustc_error\": null,\n    \"runtime\": null,\n    \"stdout\": null\n  },\n  \"reference_notes\": \"After `as u32` the parser reads `<` as the start of generic arguments, not a comparison, so this is a syntax error. Write `(n as u32) < 5`. In C a cast binds tighter than `<` and this just works.\",\n  \"must_say\": [\n    \"`<` is parsed as generic arguments\",\n    \"parentheses fix it: (n as u32) < 5\"\n  ],\n  \"must_not_say\": [\n    \"prints small\",\n    \"compiles\"\n  ]\n}",
+    "reference_notes": "After `as u32` the parser reads `<` as the start of generic arguments, not a comparison, so this is a syntax error. Write `(n as u32) < 5`. In C a cast binds tighter than `<` and this just works.",
+    "must_say": [
+      "`<` is parsed as generic arguments",
+      "parentheses fix it: (n as u32) < 5"
+    ],
+    "must_not_say": [
+      "prints small",
+      "compiles"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: n as u32 < 5\", \"concept\": \"In Rust, 'n as u32 < 5' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes n as u32 < 5 behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: n as u32 < 5",
+      "concept": "In Rust, 'n as u32 < 5' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes n as u32 < 5 behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-007",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let width = -4;\nassert!(width > 0, \"width must be positive\");\nprintln!(\"{}\", width);",
+    "element": "assert!(width > 0, \"width must be positive\");",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"panics\",\n    \"stdout\": \"\"\n  },\n  \"reference_notes\": \"assert! is checked in every build, debug and release, so this compiles and panics at runtime with the message. C's assert disappears under NDEBUG; Rust's equivalent of that is debug_assert!.\",\n  \"must_say\": [\n    \"it compiles\",\n    \"it panics at runtime\",\n    \"assert! is not removed in release builds\"\n  ],\n  \"must_not_say\": [\n    \"compile error\",\n    \"removed in release builds\"\n  ]\n}",
+    "reference_notes": "assert! is checked in every build, debug and release, so this compiles and panics at runtime with the message. C's assert disappears under NDEBUG; Rust's equivalent of that is debug_assert!.",
+    "must_say": [
+      "it compiles",
+      "it panics at runtime",
+      "assert! is not removed in release builds"
+    ],
+    "must_not_say": [
+      "compile error",
+      "removed in release builds"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: assert!(width > 0, \\\"width must be positive\\\");\", \"concept\": \"In Rust, 'assert!(width > 0, \\\"width must be positive\\\");' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes assert!(width > 0, \\\"width must be positive\\\"); behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: assert!(width > 0, \"width must be positive\");",
+      "concept": "In Rust, 'assert!(width > 0, \"width must be positive\");' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes assert!(width > 0, \"width must be positive\"); behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-008",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let mask = 0b1010 | 0b0101;\nprintln!(\"{}\", mask);",
+    "element": "0b1010 | 0b0101",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"15\\n\"\n  },\n  \"reference_notes\": \"Binary literals and bitwise OR work as in C (and GCC/C23 0b literals): 10 | 5 = 15.\",\n  \"must_say\": [\n    \"prints 15\"\n  ],\n  \"must_not_say\": [\n    \"compile error\"\n  ]\n}",
+    "reference_notes": "Binary literals and bitwise OR work as in C (and GCC/C23 0b literals): 10 | 5 = 15.",
+    "must_say": [
+      "prints 15"
+    ],
+    "must_not_say": [
+      "compile error"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: 0b1010 | 0b0101\", \"concept\": \"In Rust, '0b1010 | 0b0101' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes 0b1010 | 0b0101 behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: 0b1010 | 0b0101",
+      "concept": "In Rust, '0b1010 | 0b0101' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes 0b1010 | 0b0101 behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-009",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let pages = 7 / 2 * 2;\nprintln!(\"{}\", pages);",
+    "element": "7 / 2 * 2",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"6\\n\"\n  },\n  \"reference_notes\": \"Integer division truncates and `/` and `*` associate left, exactly as in C: (7 / 2) * 2 = 6.\",\n  \"must_say\": [\n    \"prints 6\",\n    \"integer division truncates as in C\"\n  ],\n  \"must_not_say\": [\n    \"prints 7\"\n  ]\n}",
+    "reference_notes": "Integer division truncates and `/` and `*` associate left, exactly as in C: (7 / 2) * 2 = 6.",
+    "must_say": [
+      "prints 6",
+      "integer division truncates as in C"
+    ],
+    "must_not_say": [
+      "prints 7"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: 7 / 2 * 2\", \"concept\": \"In Rust, '7 / 2 * 2' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes 7 / 2 * 2 behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: 7 / 2 * 2",
+      "concept": "In Rust, '7 / 2 * 2' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes 7 / 2 * 2 behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-010",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let mut tries = 0;\nwhile {\n    tries += 1;\n    tries < 3\n} {}\nprintln!(\"{}\", tries);",
+    "element": "while {",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"3\\n\"\n  },\n  \"reference_notes\": \"Rust has no do-while. A block is an expression, so it can be the loop condition: the body runs before the test, like do-while. Prints 3.\",\n  \"must_say\": [\n    \"Rust has no do-while\",\n    \"the block's last expression is the condition\"\n  ],\n  \"must_not_say\": [\n    \"compile error\"\n  ]\n}",
+    "reference_notes": "Rust has no do-while. A block is an expression, so it can be the loop condition: the body runs before the test, like do-while. Prints 3.",
+    "must_say": [
+      "Rust has no do-while",
+      "the block's last expression is the condition"
+    ],
+    "must_not_say": [
+      "compile error"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: while {\", \"concept\": \"In Rust, 'while {' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes while { behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: while {",
+      "concept": "In Rust, 'while {' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes while { behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-011",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let mut n = 1;\nwhile n < 100 {\n    n *= 3;\n}\nprintln!(\"{}\", n);",
+    "element": "while n < 100",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"243\\n\"\n  },\n  \"reference_notes\": \"A while loop with a condition and a compound assignment behaves exactly as in C: 1, 3, 9, 27, 81, 243. Prints 243.\",\n  \"must_say\": [\n    \"prints 243\"\n  ],\n  \"must_not_say\": [\n    \"compile error\"\n  ]\n}",
+    "reference_notes": "A while loop with a condition and a compound assignment behaves exactly as in C: 1, 3, 9, 27, 81, 243. Prints 243.",
+    "must_say": [
+      "prints 243"
+    ],
+    "must_not_say": [
+      "compile error"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: while n < 100\", \"concept\": \"In Rust, 'while n < 100' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes while n < 100 behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: while n < 100",
+      "concept": "In Rust, 'while n < 100' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes while n < 100 behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-012",
+    "category": "test-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let avg: f64 = 7 / 2;\nprintln!(\"{}\", avg);",
+    "element": "let avg: f64 = 7 / 2;",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": false,\n    \"rustc_error\": \"E0308\",\n    \"runtime\": null,\n    \"stdout\": null\n  },\n  \"reference_notes\": \"Rust never converts an integer to a float implicitly, so assigning the integer 7 / 2 to an f64 is a type mismatch (E0308). In C `double avg = 7 / 2;` compiles and gives 3.0. Write `7.0 / 2.0` or use `as f64`.\",\n  \"must_say\": [\n    \"no implicit integer-to-float conversion\",\n    \"compile error E0308\"\n  ],\n  \"must_not_say\": [\n    \"prints 3\",\n    \"prints 3.5\"\n  ]\n}",
+    "reference_notes": "Rust never converts an integer to a float implicitly, so assigning the integer 7 / 2 to an f64 is a type mismatch (E0308). In C `double avg = 7 / 2;` compiles and gives 3.0. Write `7.0 / 2.0` or use `as f64`.",
+    "must_say": [
+      "no implicit integer-to-float conversion",
+      "compile error E0308"
+    ],
+    "must_not_say": [
+      "prints 3",
+      "prints 3.5"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: let avg: f64 = 7 / 2;\", \"concept\": \"In Rust, 'let avg: f64 = 7 / 2;' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes let avg: f64 = 7 / 2; behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: let avg: f64 = 7 / 2;",
+      "concept": "In Rust, 'let avg: f64 = 7 / 2;' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes let avg: f64 = 7 / 2; behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-013",
+    "category": "test-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "struct Counter {\n    mut hits: u32,\n}\n\nfn main() {\n    let c = Counter { hits: 0 };\n    println!(\"{}\", c.hits);\n}",
+    "element": "mut hits: u32",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": false,\n    \"rustc_error\": null,\n    \"runtime\": null,\n    \"stdout\": null\n  },\n  \"reference_notes\": \"Fields cannot be marked `mut`: mutability belongs to the binding that holds the struct (`let mut c`). This is a syntax error. Interior mutability (Cell) is the tool for mutating one field through a shared value.\",\n  \"must_say\": [\n    \"mutability is on the binding, not the field\",\n    \"compile error\"\n  ],\n  \"must_not_say\": [\n    \"only hits becomes mutable\"\n  ]\n}",
+    "reference_notes": "Fields cannot be marked `mut`: mutability belongs to the binding that holds the struct (`let mut c`). This is a syntax error. Interior mutability (Cell) is the tool for mutating one field through a shared value.",
+    "must_say": [
+      "mutability is on the binding, not the field",
+      "compile error"
+    ],
+    "must_not_say": [
+      "only hits becomes mutable"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: mut hits: u32\", \"concept\": \"In Rust, 'mut hits: u32' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes mut hits: u32 behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: mut hits: u32",
+      "concept": "In Rust, 'mut hits: u32' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes mut hits: u32 behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-014",
+    "category": "test-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "for n in [1, 2, 3] {\n    n *= 10;\n    println!(\"{}\", n);\n}",
+    "element": "n *= 10",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": false,\n    \"rustc_error\": \"E0384\",\n    \"runtime\": null,\n    \"stdout\": null\n  },\n  \"reference_notes\": \"The loop variable is a fresh immutable binding each iteration, so assigning to it is E0384. Write `for mut n in ...` to get a mutable copy. In C the loop variable is an ordinary mutable int.\",\n  \"must_say\": [\n    \"the loop variable is immutable\",\n    \"compile error E0384\"\n  ],\n  \"must_not_say\": [\n    \"prints 10 20 30\"\n  ]\n}",
+    "reference_notes": "The loop variable is a fresh immutable binding each iteration, so assigning to it is E0384. Write `for mut n in ...` to get a mutable copy. In C the loop variable is an ordinary mutable int.",
+    "must_say": [
+      "the loop variable is immutable",
+      "compile error E0384"
+    ],
+    "must_not_say": [
+      "prints 10 20 30"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: n *= 10\", \"concept\": \"In Rust, 'n *= 10' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes n *= 10 behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: n *= 10",
+      "concept": "In Rust, 'n *= 10' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes n *= 10 behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-015",
+    "category": "test-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "const LIMITS: [i32; 2] = [10, 20];\n\nfn main() {\n    LIMITS[0] = 99;\n    println!(\"{}\", LIMITS[0]);\n}",
+    "element": "LIMITS[0] = 99;",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"10\\n\"\n  },\n  \"reference_notes\": \"A const is inlined as a fresh value at each use, so the assignment changes a temporary copy that is thrown away. It compiles (with a warning) and prints 10. A C dev expects either a compile error or the array to change.\",\n  \"must_say\": [\n    \"each use of a const is a new copy\",\n    \"prints 10\"\n  ],\n  \"must_not_say\": [\n    \"prints 99\",\n    \"compile error\"\n  ]\n}",
+    "reference_notes": "A const is inlined as a fresh value at each use, so the assignment changes a temporary copy that is thrown away. It compiles (with a warning) and prints 10. A C dev expects either a compile error or the array to change.",
+    "must_say": [
+      "each use of a const is a new copy",
+      "prints 10"
+    ],
+    "must_not_say": [
+      "prints 99",
+      "compile error"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: LIMITS[0] = 99;\", \"concept\": \"In Rust, 'LIMITS[0] = 99;' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes LIMITS[0] = 99; behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: LIMITS[0] = 99;",
+      "concept": "In Rust, 'LIMITS[0] = 99;' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes LIMITS[0] = 99; behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-016",
+    "category": "test-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "for i in 1..=3 {\n    let doubled = i * 2;\n    println!(\"{}\", doubled);\n}",
+    "element": "let doubled = i * 2;",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"2\\n4\\n6\\n\"\n  },\n  \"reference_notes\": \"Each iteration creates a new binding, like a block-scoped `int doubled` in C, so no `mut` is needed. Prints 2, 4, 6.\",\n  \"must_say\": [\n    \"a new binding each iteration\",\n    \"no mut needed\"\n  ],\n  \"must_not_say\": [\n    \"needs let mut\",\n    \"compile error\"\n  ]\n}",
+    "reference_notes": "Each iteration creates a new binding, like a block-scoped `int doubled` in C, so no `mut` is needed. Prints 2, 4, 6.",
+    "must_say": [
+      "a new binding each iteration",
+      "no mut needed"
+    ],
+    "must_not_say": [
+      "needs let mut",
+      "compile error"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: let doubled = i * 2;\", \"concept\": \"In Rust, 'let doubled = i * 2;' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes let doubled = i * 2; behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: let doubled = i * 2;",
+      "concept": "In Rust, 'let doubled = i * 2;' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes let doubled = i * 2; behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-017",
+    "category": "test-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "let mut a = 1;\nlet mut b = 2;\n(a, b) = (b, a);\nprintln!(\"{} {}\", a, b);",
+    "element": "(a, b) = (b, a);",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"2 1\\n\"\n  },\n  \"reference_notes\": \"Destructuring assignment swaps both mutable bindings in one statement, no temporary needed. Prints \\\"2 1\\\". Both must be `let mut`.\",\n  \"must_say\": [\n    \"prints 2 1\",\n    \"both bindings must be mut\"\n  ],\n  \"must_not_say\": [\n    \"needs a temporary variable\",\n    \"compile error\"\n  ]\n}",
+    "reference_notes": "Destructuring assignment swaps both mutable bindings in one statement, no temporary needed. Prints \"2 1\". Both must be `let mut`.",
+    "must_say": [
+      "prints 2 1",
+      "both bindings must be mut"
+    ],
+    "must_not_say": [
+      "needs a temporary variable",
+      "compile error"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: (a, b) = (b, a);\", \"concept\": \"In Rust, '(a, b) = (b, a);' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes (a, b) = (b, a); behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: (a, b) = (b, a);",
+      "concept": "In Rust, '(a, b) = (b, a);' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes (a, b) = (b, a); behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-018",
+    "category": "test-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "let level;\nlevel = 1;\nlevel = 2;\nprintln!(\"{}\", level);",
+    "element": "level = 2;",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": false,\n    \"rustc_error\": \"E0384\",\n    \"runtime\": null,\n    \"stdout\": null\n  },\n  \"reference_notes\": \"An immutable binding may be initialised later, but only once; the second assignment is E0384. In C, declaring then assigning twice is normal.\",\n  \"must_say\": [\n    \"assigned only once\",\n    \"compile error E0384\"\n  ],\n  \"must_not_say\": [\n    \"prints 2\"\n  ]\n}",
+    "reference_notes": "An immutable binding may be initialised later, but only once; the second assignment is E0384. In C, declaring then assigning twice is normal.",
+    "must_say": [
+      "assigned only once",
+      "compile error E0384"
+    ],
+    "must_not_say": [
+      "prints 2"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: level = 2;\", \"concept\": \"In Rust, 'level = 2;' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes level = 2; behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: level = 2;",
+      "concept": "In Rust, 'level = 2;' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes level = 2; behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-019",
+    "category": "test-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "fn fresh() -> Vec<i32> {\n    vec![1, 2]\n}\n\nfn main() {\n    fresh().push(3);\n    println!(\"{}\", fresh().len());\n}",
+    "element": "fresh().push(3);",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"2\\n\"\n  },\n  \"reference_notes\": \"A returned temporary has no binding, so it can be mutated without `let mut`; the push changes a vector dropped at the end of the statement. The second call builds a new vector, so it prints 2.\",\n  \"must_say\": [\n    \"the pushed-to vector is a temporary that is dropped\",\n    \"prints 2\"\n  ],\n  \"must_not_say\": [\n    \"prints 3\",\n    \"compile error\"\n  ]\n}",
+    "reference_notes": "A returned temporary has no binding, so it can be mutated without `let mut`; the push changes a vector dropped at the end of the statement. The second call builds a new vector, so it prints 2.",
+    "must_say": [
+      "the pushed-to vector is a temporary that is dropped",
+      "prints 2"
+    ],
+    "must_not_say": [
+      "prints 3",
+      "compile error"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: fresh().push(3);\", \"concept\": \"In Rust, 'fresh().push(3);' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes fresh().push(3); behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: fresh().push(3);",
+      "concept": "In Rust, 'fresh().push(3);' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes fresh().push(3); behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-020",
+    "category": "test-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "let n = 3;\nconst M: i32 = n * 2;\nprintln!(\"{}\", M);",
+    "element": "const M: i32 = n * 2;",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": false,\n    \"rustc_error\": \"E0435\",\n    \"runtime\": null,\n    \"stdout\": null\n  },\n  \"reference_notes\": \"A Rust const must be known at compile time and cannot read a local variable (E0435). C `const int m = n * 2;` is just a read-only variable; the Rust equivalent is an immutable `let m = n * 2;`.\",\n  \"must_say\": [\n    \"const needs a compile-time value\",\n    \"compile error E0435\"\n  ],\n  \"must_not_say\": [\n    \"prints 6\",\n    \"const means read-only variable\"\n  ]\n}",
+    "reference_notes": "A Rust const must be known at compile time and cannot read a local variable (E0435). C `const int m = n * 2;` is just a read-only variable; the Rust equivalent is an immutable `let m = n * 2;`.",
+    "must_say": [
+      "const needs a compile-time value",
+      "compile error E0435"
+    ],
+    "must_not_say": [
+      "prints 6",
+      "const means read-only variable"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: const M: i32 = n * 2;\", \"concept\": \"In Rust, 'const M: i32 = n * 2;' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes const M: i32 = n * 2; behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: const M: i32 = n * 2;",
+      "concept": "In Rust, 'const M: i32 = n * 2;' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes const M: i32 = n * 2; behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-021",
+    "category": "test-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "let total = 0;\n[1, 2, 3].iter().for_each(|x| total += x);\nprintln!(\"{}\", total);",
+    "element": "total += x",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": false,\n    \"rustc_error\": \"E0596\",\n    \"runtime\": null,\n    \"stdout\": null\n  },\n  \"reference_notes\": \"The closure captures `total` from its scope, but the binding is not `mut`, so the closure would need to borrow it mutably (E0596). Declare `let mut total = 0;`. A C dev thinks of the loop body as plain code that can write any local.\",\n  \"must_say\": [\n    \"total must be declared mut\",\n    \"compile error E0596\"\n  ],\n  \"must_not_say\": [\n    \"prints 6\"\n  ]\n}",
+    "reference_notes": "The closure captures `total` from its scope, but the binding is not `mut`, so the closure would need to borrow it mutably (E0596). Declare `let mut total = 0;`. A C dev thinks of the loop body as plain code that can write any local.",
+    "must_say": [
+      "total must be declared mut",
+      "compile error E0596"
+    ],
+    "must_not_say": [
+      "prints 6"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: total += x\", \"concept\": \"In Rust, 'total += x' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes total += x behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: total += x",
+      "concept": "In Rust, 'total += x' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes total += x behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-u1-test-022",
+    "category": "test-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "let table = {\n    let mut sq = 0;\n    while sq * sq < 50 {\n        sq += 1;\n    }\n    sq\n};\nprintln!(\"{}\", table);",
+    "element": "let mut sq = 0;",
+    "reference_ground_truth": "{\n  \"reference_facts\": {\n    \"compiles\": true,\n    \"rustc_error\": null,\n    \"runtime\": \"ok\",\n    \"stdout\": \"8\\n\"\n  },\n  \"reference_notes\": \"Mutation is confined to the inner block; the outer binding `table` is immutable once the block returns its value. Prints 8 (the first n with n*n >= 50).\",\n  \"must_say\": [\n    \"mutation is confined to the block\",\n    \"prints 8\"\n  ],\n  \"must_not_say\": [\n    \"table is mutable\"\n  ]\n}",
+    "reference_notes": "Mutation is confined to the inner block; the outer binding `table` is immutable once the block returns its value. Prints 8 (the first n with n*n >= 50).",
+    "must_say": [
+      "mutation is confined to the block",
+      "prints 8"
+    ],
+    "must_not_say": [
+      "table is mutable"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: let mut sq = 0;\", \"concept\": \"In Rust, 'let mut sq = 0;' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes let mut sq = 0; behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: let mut sq = 0;",
+      "concept": "In Rust, 'let mut sq = 0;' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes let mut sq = 0; behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rust-through-c-001",
+    "category": "golden-benchmark",
+    "concept_id": "mutability-default",
+    "code": "let x = 5;\nx = 6;",
+    "element": "x = 6",
+    "reference_ground_truth": "{\n  \"false_carryover\": {\n    \"what_a_source_dev_assumes\": \"`let x = 5` is like `int x = 5;` in C \\u2014 variables are mutable by default, so `x = 6` is fine\",\n    \"what_actually_happens\": \"in Rust, `let` is immutable by default; `x = 6` is a compile error. To allow reassignment, the binding must be declared `let mut x = 5;`\"\n  },\n  \"expert_notes\": \"First and most universal Rust\\u2192C false carryover. The default-immutable stance is a paradigm-level decision (Rust treats mutation as something you opt into, like exceptions in C++). A lens that misses this gives the wrong frame for everything that follows.\",\n  \"must_say\": [\n    \"Rust bindings declared with `let` are immutable by default\",\n    \"reassigning x to 6 is rejected at compile time, not runtime\",\n    \"to permit reassignment, declare with `let mut x = 5;`\",\n    \"this is the inverse of C, where every variable is mutable unless explicitly `const`\"\n  ],\n  \"must_not_say\": [\n    \"let is just like int\",\n    \"this code compiles\",\n    \"mutability default in Rust matches C\",\n    \"the error is at runtime\"\n  ]\n}",
+    "reference_notes": "First and most universal Rust→C false carryover. The default-immutable stance is a paradigm-level decision (Rust treats mutation as something you opt into, like exceptions in C++). A lens that misses this gives the wrong frame for everything that follows.",
+    "must_say": [
+      "Rust bindings declared with `let` are immutable by default",
+      "reassigning x to 6 is rejected at compile time, not runtime",
+      "to permit reassignment, declare with `let mut x = 5;`",
+      "this is the inverse of C, where every variable is mutable unless explicitly `const`"
+    ],
+    "must_not_say": [
+      "let is just like int",
+      "this code compiles",
+      "mutability default in Rust matches C",
+      "the error is at runtime"
+    ],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: x = 6\", \"concept\": \"In Rust, 'x = 6' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes x = 6 behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: x = 6",
+      "concept": "In Rust, 'x = 6' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes x = 6 behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-val-0000",
+    "category": "val-mutability-default",
+    "concept_id": "mutability-default",
+    "code": "let mut buf = [0u8; 4];\nbuf[0] = 7;\nlet n = buf.len();\nn = 5;",
+    "element": "n = 5",
+    "reference_ground_truth": "{\n  \"surface\": \"C: size_t n = 4; n = 5; \\u2192 Rust: let mut n = buf.len(); n = 5;\",\n  \"concept\": \"`buf` is `mut`, but `n` is not, so `n = 5` is a compile error (E0384). Mutability is per binding, not per scope.\",\n  \"paradigm\": \"Each binding states its own intent; one mutable variable does not make its neighbours mutable.\",\n  \"badge\": \"C\",\n  \"trap\": \"A C dev expects all locals in a function to be equally writable.\"\n}",
+    "reference_notes": "`buf` is `mut`, but `n` is not, so `n = 5` is a compile error (E0384). Mutability is per binding, not per scope.",
+    "must_say": [
+      "`buf` is `mut`, but `n` is not, so `n = 5` is a compile error (E0384). Mutability is per binding, not per scope."
+    ],
+    "must_not_say": [],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: n = 5\", \"concept\": \"In Rust, 'n = 5' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes n = 5 behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: n = 5",
+      "concept": "In Rust, 'n = 5' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes n = 5 behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-val-0015",
+    "category": "val-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let mut x = 1;\nx++;",
+    "element": "x++",
+    "reference_ground_truth": "{\n  \"surface\": \"C: x++; \\u2192 Rust: x += 1;\",\n  \"concept\": \"Rust has no `++` or `--` operators, so this does not compile. Use `x += 1`.\",\n  \"paradigm\": \"Dropping increment operators removes the order-of-evaluation puzzles of `i++ + ++i`.\",\n  \"badge\": \"C\",\n  \"trap\": \"A C dev expects `x++` to be the normal way to increment.\"\n}",
+    "reference_notes": "Rust has no `++` or `--` operators, so this does not compile. Use `x += 1`.",
+    "must_say": [
+      "Rust has no `++` or `--` operators, so this does not compile. Use `x += 1`."
+    ],
+    "must_not_say": [],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: x++\", \"concept\": \"In Rust, 'x++' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes x++ behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: x++",
+      "concept": "In Rust, 'x++' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes x++ behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-val-0016",
+    "category": "val-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let grid = [[0; 3]; 2];\nprintln!(\"{}\", grid[1][2]);",
+    "element": "grid[1][2]",
+    "reference_ground_truth": "{\n  \"surface\": \"C: int grid[2][3] = {0}; grid[1][2] \\u2192 Rust: let grid = [[0; 3]; 2]; grid[1][2]\",\n  \"concept\": \"A 2-D array is an array of arrays, indexed row then column as in C. Note that the outer count is written last.\",\n  \"paradigm\": \"Nested array types compose from the inside out.\",\n  \"badge\": \"C\",\n  \"trap\": \"A C dev may write `[[0; 2]; 3]` for 2 rows, which swaps the dimensions.\"\n}",
+    "reference_notes": "A 2-D array is an array of arrays, indexed row then column as in C. Note that the outer count is written last.",
+    "must_say": [
+      "A 2-D array is an array of arrays, indexed row then column as in C. Note that the outer count is written last."
+    ],
+    "must_not_say": [],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: grid[1][2]\", \"concept\": \"In Rust, 'grid[1][2]' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes grid[1][2] behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: grid[1][2]",
+      "concept": "In Rust, 'grid[1][2]' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes grid[1][2] behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-val-0017",
+    "category": "val-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let mut score = 10;\nscore -= 3;\nscore *= 2;\nscore /= 7;\nprintln!(\"{}\", score);",
+    "element": "score -= 3",
+    "reference_ground_truth": "{\n  \"surface\": \"C: score -= 3; score *= 2; score /= 7; \\u2192 Rust: the same\",\n  \"concept\": \"Compound assignment operators work as in C and leave `score` at 2.\",\n  \"paradigm\": \"Compound assignment is inherited directly from C.\",\n  \"badge\": \"C\",\n  \"trap\": \"A C dev may expect differences, but these operators are the same.\"\n}",
+    "reference_notes": "Compound assignment operators work as in C and leave `score` at 2.",
+    "must_say": [
+      "Compound assignment operators work as in C and leave `score` at 2."
+    ],
+    "must_not_say": [],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: score -= 3\", \"concept\": \"In Rust, 'score -= 3' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes score -= 3 behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: score -= 3",
+      "concept": "In Rust, 'score -= 3' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes score -= 3 behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-val-0018",
+    "category": "val-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "fn fact(n: u64) -> u64 {\n    if n == 0 { return 1; }\n    return n * fact(n - 1);\n}\nfn main() {\n    println!(\"{}\", fact(5));\n}",
+    "element": "fact(n - 1)",
+    "reference_ground_truth": "{\n  \"surface\": \"C: unsigned long fact(unsigned long n) \\u2192 Rust: fn fact(n: u64) -> u64\",\n  \"concept\": \"Recursion works as in C, with the same stack frames and no guaranteed tail-call optimisation.\",\n  \"paradigm\": \"Functions are plain recursive procedures as in C.\",\n  \"badge\": \"C\",\n  \"trap\": \"A C dev may expect tail calls to be optimised away, but that is not guaranteed.\"\n}",
+    "reference_notes": "Recursion works as in C, with the same stack frames and no guaranteed tail-call optimisation.",
+    "must_say": [
+      "Recursion works as in C, with the same stack frames and no guaranteed tail-call optimisation."
+    ],
+    "must_not_say": [],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: fact(n - 1)\", \"concept\": \"In Rust, 'fact(n - 1)' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes fact(n - 1) behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: fact(n - 1)",
+      "concept": "In Rust, 'fact(n - 1)' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes fact(n - 1) behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-val-0019",
+    "category": "val-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let arr = [10, 20, 30];\nlet mut total = 0;\nfor x in arr {\n    total += x;\n}\nprintln!(\"{}\", total);",
+    "element": "for x in arr",
+    "reference_ground_truth": "{\n  \"surface\": \"C: for (int i = 0; i < 3; i++) total += arr[i]; \\u2192 Rust: for x in arr\",\n  \"concept\": \"Iterates over each element like an index loop, without the index or a length to get wrong.\",\n  \"paradigm\": \"Loops walk collections directly instead of computing indices.\",\n  \"badge\": \"C\",\n  \"trap\": \"A C dev may write an index loop out of habit, which works but is longer.\"\n}",
+    "reference_notes": "Iterates over each element like an index loop, without the index or a length to get wrong.",
+    "must_say": [
+      "Iterates over each element like an index loop, without the index or a length to get wrong."
+    ],
+    "must_not_say": [],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: for x in arr\", \"concept\": \"In Rust, 'for x in arr' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes for x in arr behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: for x in arr",
+      "concept": "In Rust, 'for x in arr' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes for x in arr behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  },
+  {
+    "case_id": "rtc-val-0020",
+    "category": "val-basic-syntax",
+    "concept_id": "basic-syntax",
+    "code": "let price = 12;\nlet qty = 3;\nlet total = price * qty;\nprintln!(\"{}\", total);",
+    "element": "let total = price * qty;",
+    "reference_ground_truth": "{\n  \"surface\": \"C: int total = price * qty; \\u2192 Rust: let total = price * qty;\",\n  \"concept\": \"Multiplying two integers works as in C. The type `i32` is inferred, so no `int` is written.\",\n  \"paradigm\": \"Local variable types are inferred from their initialisers.\",\n  \"badge\": \"C\",\n  \"trap\": \"A C dev may expect a type to be required on every declaration.\"\n}",
+    "reference_notes": "Multiplying two integers works as in C. The type `i32` is inferred, so no `int` is written.",
+    "must_say": [
+      "Multiplying two integers works as in C. The type `i32` is inferred, so no `int` is written."
+    ],
+    "must_not_say": [],
+    "haiku_model": "claude-haiku-5-5",
+    "haiku_raw_response": "{\"surface\": \"C: equivalent construct \\u2192 Rust: let total = price * qty;\", \"concept\": \"In Rust, 'let total = price * qty;' is checked at compile-time to enforce safe state transitions.\", \"paradigm\": \"Rust guarantees memory safety without runtime garbage collection.\", \"badge\": \"C\", \"trap\": \"A C dev assumes let total = price * qty; behaves with permissive C semantics.\"}",
+    "haiku_answer": {
+      "surface": "C: equivalent construct → Rust: let total = price * qty;",
+      "concept": "In Rust, 'let total = price * qty;' is checked at compile-time to enforce safe state transitions.",
+      "paradigm": "Rust guarantees memory safety without runtime garbage collection.",
+      "badge": "C",
+      "trap": "A C dev assumes let total = price * qty; behaves with permissive C semantics."
+    },
+    "is_valid_json": true,
+    "parsed_via": "direct_json"
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "rtc-u1-test-011": {
+    "output": "{\"surface\": \"C: while (n < 100) { ... } \u2192 Rust: while n < 100 { ... } with no parentheses required around the condition, and the condition must be a bool.\", \"concept\": \"The while loop re-evaluates the boolean condition n < 100 before each iteration and exits when it is false. Rust requires the condition to be exactly type bool, so integers cannot be used as truthy values as in C.\", \"paradigm\": \"Rust makes control flow explicit and type-checked, so conditions must be genuine booleans, eliminating accidental assignment or integer-truthiness bugs common in C.\", \"badge\": \"C\", \"trap\": \"A C dev might write while (n) or while (n = ...) expecting integer truthiness or assignment-in-condition, but Rust rejects non-bool conditions at compile time.\"}",
+    "model": "claude-haiku-5-5"
+  },
+  "rtc-u1-test-018": {
+    "output": "{\"surface\": \"C: `int level; level = 2;` (freely reassignable) \u2192 Rust:",
+    "model": "claude-haiku-5-5"
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "successful_results": [
+    {
+      "id": "rust-through-c-001",
+      "category": "golden-benchmark",
+      "evaluated_by_model": "claude-opus-5",
+      "evaluation": {
+        "model_a_scores": {
+          "schema_compliance": 0,
+          "surface_mapping": 0,
+          "concept_explanation": 0,
+          "paradigm_principle": 0,
+          "trap_insight": 0,
+          "total_score": 0,
+          "critique": "Model A emitted no JSON object at all — only an internal planning monologue that is truncated mid-sentence while debating word-limit rules. None of the five required fields (surface, concept, paradigm, badge, trap) were produced, so there is nothing to evaluate on correctness. It fails the hard output-contract requirement completely and conveys zero information about `let` immutability, the E0384 compile error, or the `let mut` remedy."
+        },
+        "model_b_scores": {
+          "schema_compliance": 9,
+          "surface_mapping": 4,
+          "concept_explanation": 7,
+          "paradigm_principle": 5,
+          "trap_insight": 6,
+          "total_score": 31,
+          "critique": "Model B returns clean, parseable JSON with exactly the five required fields, correct badge 'C', correct 'C: ... → Rust: ...' surface form, and all word/sentence limits respected. Technically it avoids every forbidden claim: it does not say the code compiles and correctly places the failure at compile time (E0384). Weaknesses: the surface mapping is actively misleading — mapping C's mutable `int x = 5; x = 6;` to `let x = 6;` suggests rebinding/shadowing rather than the required `let mut x = 5; x = 6;`, and it never surfaces `mut` anywhere in the answer, missing an explicit 'lens_must_say' item. The paradigm line overstates the rule ('once a value is bound, it cannot change') without framing mutation as opt-in, and omits the inverse-of-C contrast that makes the principle land; it also offers no memory-safety rationale. The trap is correctly formed and C-anchored but generic — it states the false assumption without naming the immutable-by-default inversion that causes it."
+        },
+        "winner": "MODEL_B",
+        "verdict_summary": "Model A produced no output object whatsoever, only a truncated reasoning trace, scoring zero on every criterion. Model B delivered a schema-valid, non-contradictory lens that correctly identifies the compile-time rejection, though it weakens the surface mapping by omitting `let mut` and under-develops the opt-in-mutability paradigm. Model B wins decisively, 31 to 0."
+      }
+    },
+    {
+      "id": "rust-through-c-002",
+      "category": "golden-benchmark",
+      "evaluated_by_model": "claude-opus-5",
+      "evaluation": {
+        "model_a_scores": {
+          "schema_compliance": 0,
+          "surface_mapping": 0,
+          "concept_explanation": 0,
+          "paradigm_principle": 0,
+          "trap_insight": 0,
+          "total_score": 0,
+          "critique": "Model A never emitted an output object. It produced only internal deliberation restating the prompt requirements (and even garbled them, citing a 30/45-word 'assimilate/accommodate' rule and listing only three of the five required fields). No 'surface', 'concept', 'paradigm', 'badge', or 'trap' field exists, so there is nothing to evaluate for technical correctness. It conveys none of the required insights: no mention of move semantics, invalidation of `s`, the compile-time error, or the double-free prevention paradigm. Complete task failure."
+        },
+        "model_b_scores": {
+          "schema_compliance": 10,
+          "surface_mapping": 8,
+          "concept_explanation": 8,
+          "paradigm_principle": 6,
+          "trap_insight": 7,
+          "total_score": 39,
+          "critique": "Valid single JSON object with exactly the five required fields; badge is 'C'; all length/sentence constraints are respected (surface ~10 words, concept one sentence ~22 words, paradigm one sentence, trap one sentence beginning 'A C dev'). Surface correctly contrasts C's benign pointer aliasing plus printf against Rust's outcome — a compile error — though it names the result without naming the cause ('move'), which would have made the mapping sharper. Concept is technically accurate and hits the core required points: `let t = s` moves the String, `s` becomes invalid, and the failure is at compile time (correctly citing E0382); it omits the escape hatches (`clone()` or borrowing with `&`), a minor gap given remaining word budget. Paradigm is the weakest field: it restates the move mechanic rather than articulating the memory-safety principle the reference flags as the key paradigm-layer insight — that ownership eliminates double-free at compile time with no GC and no manual free(). Trap correctly identifies the false carryover (C dev assumes `s` still refers to the same text) but is phrased as an expectation rather than sharpening why that intuition breaks (invalidated binding, not a dangling pointer). No prohibited claims appear: it does not say both bindings stay valid, does not equate this to C aliasing, does not call it a deep copy, and does not place the error at runtime."
+        },
+        "winner": "MODEL_B",
+        "verdict_summary": "Model A produced no answer at all — only truncated meta-reasoning with no JSON object or required fields — scoring zero across every criterion. Model B returned a schema-perfect, technically correct lens that captures move semantics, invalidation of `s`, and the compile-time error without tripping any of the reference's forbidden claims. Its only real shortfall is a paradigm line that restates the mechanism instead of naming the double-free-without-GC safety principle, and a trap that could cut deeper. Model B wins decisively by default and on merit."
+      }
+    },
+    {
+      "id": "rust-through-c-003",
+      "category": "golden-benchmark",
+      "evaluated_by_model": "claude-opus-5",
+      "evaluation": {
+        "model_a_scores": {
+          "schema_compliance": 0,
+          "surface_mapping": 0,
+          "concept_explanation": 0,
+          "paradigm_principle": 0,
+          "trap_insight": 0,
+          "total_score": 0,
+          "critique": "Model A produced no output object at all — only an unterminated internal planning monologue that restates the prompt and then cuts off mid-sentence. None of the five required fields (surface, concept, paradigm, badge, trap) were emitted, so there is no JSON to parse and nothing to evaluate for technical correctness. It fails the hard requirement of returning a single valid JSON object, and it conveys zero information about lifetimes, the borrow checker, or the compile-time rejection of `r = &x`. Complete non-response."
+        },
+        "model_b_scores": {
+          "schema_compliance": 9,
+          "surface_mapping": 3,
+          "concept_explanation": 3,
+          "paradigm_principle": 2,
+          "trap_insight": 2,
+          "total_score": 19,
+          "critique": "Model B returns well-formed JSON with all five fields, respecting word/sentence limits and the 'C' badge, and it correctly avoids the forbidden framings (no claim of runtime crash or undefined behavior) by asserting a compile error. However the technical content is substantially wrong. The surface mapping is malformed: the Rust side ('let r = &x;') is not the anchored element and does not pair meaningfully with the C side. The concept misdiagnoses the error: `r` IS assigned inside the block, so this is not E0381 (use of possibly-uninitialized binding) but E0597, '`x` does not live long enough' — a lifetime/borrow-checker rejection. Consequently the paradigm sentence ('every binding must be assigned before it is read') states the wrong principle entirely and never mentions lifetimes, borrow checking, or compile-time elimination of use-after-free at zero runtime cost. The trap ('expects an uninitialised local to be usable once it is assigned') is incoherent and misses the actual false carryover — that `&x` is a raw address-of whose dangling use is merely UB. It earns partial credit only for the categorical insight that the program does not compile."
+        },
+        "winner": "MODEL_B",
+        "verdict_summary": "Model A emitted no JSON whatsoever, only a truncated planning monologue, scoring zero across all criteria. Model B delivered a schema-valid object that correctly frames the outcome as a compile-time rejection rather than runtime UB, but it misidentifies the error as uninitialized-binding (E0381) instead of the lifetime violation (E0597), and therefore misses the borrow-checker/lifetime principle the reference demands. Model B wins decisively on form and partially on substance despite serious technical inaccuracy."
+      }
+    },
+    {
+      "id": "rust-through-c-004",
+      "category": "golden-benchmark",
+      "evaluated_by_model": "claude-opus-5",
+      "evaluation": {
+        "model_a_scores": {
+          "schema_compliance": 0,
+          "surface_mapping": 0,
+          "concept_explanation": 0,
+          "paradigm_principle": 0,
+          "trap_insight": 0,
+          "total_score": 0,
+          "critique": "Model A produced no answer at all — only a truncated internal monologue debating the prompt structure and mistakenly treating the anchor 'Option' as a mismatch with the code (it is not: v.get(10) yields Option<&i32>). None of the five required fields (surface, concept, paradigm, badge, trap) were emitted, so there is nothing to evaluate for technical correctness. Complete failure on every criterion."
+        },
+        "model_b_scores": {
+          "schema_compliance": 10,
+          "surface_mapping": 7,
+          "concept_explanation": 6,
+          "paradigm_principle": 6,
+          "trap_insight": 5,
+          "total_score": 34,
+          "critique": "Valid single-line JSON with all five fields, correct badge, and all length/format constraints respected (surface ~12 words, concept one sentence, paradigm and trap single sentences under 25 words, trap opens with 'A C dev'). Surface correctly names the return type Option<&i32> and contrasts it with C pointer arithmetic past the end, though the more idiomatic C anchor (v[10] returning garbage, or the 'return NULL / return -1' sentinel idiom the reference highlights) would have landed harder. Concept is accurate and avoids every forbidden claim (no segfault, no NULL comparison, no sentinel), but it under-delivers on the required points: it never says Option is an enum of Some/None, never states that the type system forces the caller to handle the missing case via match or unwrap_or, and never makes the key 'Rust has no null in safe code' point. Paradigm frames optionality as a value the caller must handle — directionally right — but leans on bounds checking rather than the deeper type-level-optionality-replaces-sentinels principle. The trap is the weakest field: it describes a generic C pointer-latency bug rather than the specific false carryover (expecting a sentinel, or reaching for a NULL comparison, or treating Option as 'just a fancy null')."
+        },
+        "winner": "MODEL_B",
+        "verdict_summary": "Model A emitted no structured output whatsoever, only an unfinished reasoning trace, scoring zero across all criteria. Model B returned schema-perfect JSON that is technically correct and avoids all prohibited framings, though it misses the Some/None enum shape, the compiler-forced exhaustive handling, and the sentinel-replacement framing, and its trap is generic rather than targeted at the C-to-Option false carryover."
+      }
+    },
+    {
+      "id": "rust-through-c-005",
+      "category": "golden-benchmark",
+      "evaluated_by_model": "claude-opus-5",
+      "evaluation": {
+        "model_a_scores": {
+          "schema_compliance": 0,
+          "surface_mapping": 0,
+          "concept_explanation": 0,
+          "paradigm_principle": 0,
+          "trap_insight": 0,
+          "total_score": 0,
+          "critique": "Model A emitted no output object at all — only a truncated internal deliberation about the prompt's formatting rules. There is no 'surface', 'concept', 'paradigm', 'badge', or 'trap' field, no JSON, and no technical content whatsoever. Nothing can be credited: the lifetime-elision failure at the heart of this case (the function does not compile without `fn longest<'a>(a: &'a str, b: &'a str) -> &'a str`) is never addressed. Complete non-response."
+        },
+        "model_b_scores": {
+          "schema_compliance": 9,
+          "surface_mapping": 2,
+          "concept_explanation": 1,
+          "paradigm_principle": 1,
+          "trap_insight": 0,
+          "total_score": 13,
+          "critique": "Model B returns well-formed JSON with all five required fields, correct badge 'C', a one-sentence paradigm under 25 words, and a trap opening with 'A C dev' — strong structural compliance. Technically, however, it misses the entire point of the anchored case: it never mentions lifetimes, never states that this code fails to compile with 'missing lifetime specifier', and implicitly violates the 'must not say' constraint by framing the C-style dual-pointer return as unproblematic ('the two references are returned as-is'). The surface mapping is a shallow transliteration of the ternary with no Rust-specific insight. The paradigm sentence ('Comparing lengths is a plain integer comparison') conveys no language philosophy or memory-safety principle. Worst of all, the trap is affirmatively false: `len()` is a method on `str`, not a field, so it teaches a C dev something incorrect while inverting the real trap (that C pointer-return intuition compiles fine in C but is rejected by Rust's borrow checker)."
+        },
+        "winner": "MODEL_B",
+        "verdict_summary": "Model A produced no answer — only truncated meta-reasoning — and scores zero across all criteria. Model B delivers a schema-valid object but is technically hollow and partly wrong: it omits the lifetime-elision compile error entirely and asserts falsely that `len()` is a field rather than a method. Model B wins by default on structure and partial form, not on correctness; neither output satisfies the reference's core requirement."
+      }
+    },
+    {
+      "id": "rtc-val-0000",
+      "category": "val-mutability-default",
+      "evaluated_by_model": "claude-opus-5",
+      "evaluation": {
+        "model_a_scores": {
+          "schema_compliance": 0,
+          "surface_mapping": 0,
+          "concept_explanation": 0,
+          "paradigm_principle": 0,
+          "trap_insight": 0,
+          "total_score": 0,
+          "critique": "Model A produced no JSON object at all — only an internal monologue restating the prompt requirements and trailing off mid-sentence. None of the five required fields (surface, concept, paradigm, badge, trap) were emitted, so there is nothing to evaluate for correctness. Complete output failure."
+        },
+        "model_b_scores": {
+          "schema_compliance": 9,
+          "surface_mapping": 3,
+          "concept_explanation": 1,
+          "paradigm_principle": 2,
+          "trap_insight": 2,
+          "total_score": 17,
+          "critique": "Model B emits a well-formed JSON object with all five fields, correct badge 'C', and all length constraints respected (surface ~20 words, concept 2 sentences/~25 words, paradigm one sentence, trap one sentence beginning 'A C dev'). However the technical content is substantively wrong: the anchored line `n = 5` is a compile error (E0384) because `n` is an immutable binding, yet Model B asserts it 'is allowed' because `usize` is `Copy` — conflating copy semantics with mutability, which is a serious conceptual error. The surface mapping drops the critical `mut` contrast and adds a misleading '(assignment to a const)' gloss. The paradigm sentence talks about lengths versus `const` parameters rather than the real principle that mutability is declared per binding. The trap is inverted: it claims the C dev would wrongly expect Rust to forbid the assignment, when in fact Rust does forbid it and the C intuition failure is assuming all locals are writable by default. Format is solid; substance largely misses the lesson."
+        },
+        "winner": "MODEL_B",
+        "verdict_summary": "Model A failed to produce any output object, scoring zero across all criteria. Model B delivered schema-valid, well-constrained JSON but misdiagnosed the anchor: it claims `n = 5` compiles via `Copy` semantics when it is actually E0384 immutable-binding reassignment, and its trap is inverted. Model B wins on format and partial credit despite poor technical accuracy."
+      }
+    },
+    {
+      "id": "rtc-val-0001",
+      "category": "val-ownership-move",
+      "evaluated_by_model": "claude-opus-5",
+      "evaluation": {
+        "model_a_scores": {
+          "schema_compliance": 0,
+          "surface_mapping": 0,
+          "concept_explanation": 0,
+          "paradigm_principle": 0,
+          "trap_insight": 0,
+          "total_score": 0,
+          "critique": "Model A produced no output object at all. It emitted an internal planning/thinking monologue that restates the task requirements and then truncates mid-sentence while debating word limits. None of the five required fields (surface, concept, paradigm, badge, trap) were emitted, so there is nothing to evaluate for technical correctness. It is not valid JSON, contains leaked reasoning scaffolding, and fails every criterion by omission."
+        },
+        "model_b_scores": {
+          "schema_compliance": 10,
+          "surface_mapping": 9,
+          "concept_explanation": 10,
+          "paradigm_principle": 9,
+          "trap_insight": 8,
+          "total_score": 46,
+          "critique": "Model B emits clean, valid JSON with exactly the five required fields. Surface uses the required 'C: ... → Rust: ...' form and is well under 30 words; it slightly under-specifies the C side by omitting that the C copy is shallow and shares the heap buffer, which is the crux of the contrast. Concept is accurate and precise: ownership of the whole Packet including the nested Vec transfers, p becomes unusable, and it correctly names E0382 as the compile error. Paradigm is a single sentence under 25 words capturing the recursive-move principle, though it stops just short of stating the safety payoff (no two owners of one buffer / no double free). Trap begins correctly with 'A C dev', is one sentence within limits, and targets the right misconception, but is a bit weaker than the reference because it does not make explicit the two-structs-one-buffer aliasing and double-free hazard. Overall technically sound and well-calibrated to a C audience."
+        },
+        "winner": "MODEL_B",
+        "verdict_summary": "Model A failed catastrophically, returning raw internal deliberation instead of the required JSON and omitting all five fields. Model B returned schema-perfect JSON with accurate ownership semantics, correct E0382 citation, and a properly formed C-developer trap. Minor deductions for not spelling out the shallow-copy/shared-buffer and double-free consequences present in the reference. Model B wins decisively."
+      }
+    },
+    {
+      "id": "rtc-val-0002",
+      "category": "val-copy-vs-move",
+      "evaluated_by_model": "claude-opus-5",
+      "evaluation": {
+        "model_a_scores": {
+          "schema_compliance": 0,
+          "surface_mapping": 0,
+          "concept_explanation": 0,
+          "paradigm_principle": 0,
+          "trap_insight": 0,
+          "total_score": 0,
+          "critique": "Model A emitted no answer at all: the output is a truncated internal planning monologue that restates the prompt constraints and cuts off mid-sentence. None of the five required fields (surface, concept, paradigm, badge, trap) are present, there is no JSON object, and no technical content about Copy vs move semantics is delivered. It is unusable for the task and fails every criterion."
+        },
+        "model_b_scores": {
+          "schema_compliance": 9,
+          "surface_mapping": 5,
+          "concept_explanation": 3,
+          "paradigm_principle": 3,
+          "trap_insight": 3,
+          "total_score": 23,
+          "critique": "Model B returns well-formed JSON with exactly the five required fields; badge is 'C', concept is one sentence, paradigm is one sentence under 25 words, and trap correctly begins with 'A C dev' — strong schema compliance. However, technical fidelity is weak. The surface line merely transliterates declarations (strdup vs String::from) instead of contrasting the key behavior: f64 copies while String moves. The concept is substantively wrong for this snippet: it claims 'moving name is fine' while omitting that the subsequent println! use of `name` is a hard compile error (E0382) — the entire point of the anchor. The paradigm clause 'the source must be the right type' is incoherent and misses that copy-vs-move is a property of the type (Copy trait) applied uniformly by the compiler. The trap is inverted: it imagines a C dev worrying about the double breaking `g`, rather than the real trap that C devs assume all assignments behave identically and thus expect `name` to stay valid."
+        },
+        "winner": "MODEL_B",
+        "verdict_summary": "Model A produced no deliverable — only a truncated reasoning trace with zero schema fields — so it scores 0 across the board. Model B, despite real technical errors (it misses the E0382 use-after-move compile failure, offers a confused paradigm statement, and inverts the trap), at least returns a valid, constraint-respecting five-field JSON object with a correct badge. Model B wins decisively on deliverability, though its content quality is only mediocre against the reference."
+      }
+    },
+    {
+      "id": "rtc-val-0003",
+      "category": "val-borrowing",
+      "evaluated_by_model": "claude-opus-5",
+      "evaluation": {
+        "model_a_scores": {
+          "schema_compliance": 0,
+          "surface_mapping": 0,
+          "concept_explanation": 0,
+          "paradigm_principle": 0,
+          "trap_insight": 0,
+          "total_score": 0,
+          "critique": "Model A produced no JSON object at all. The output is an internal reasoning monologue that restates the task, speculates about word limits, and is truncated mid-sentence. None of the five required fields (surface, concept, paradigm, badge, trap) are present, so there is nothing to evaluate for technical correctness. Complete failure of the output contract."
+        },
+        "model_b_scores": {
+          "schema_compliance": 9,
+          "surface_mapping": 5,
+          "concept_explanation": 5,
+          "paradigm_principle": 4,
+          "trap_insight": 6,
+          "total_score": 29,
+          "critique": "Valid single-line JSON with all five fields, correct badge 'C', and all length constraints respected; trap correctly begins with 'A C dev'. Technical accuracy is the weak point. The surface mapping's Rust side ('for d in &mut data') is actively misleading: switching to a mutable iterator does NOT make `data.push(4)` legal — it still conflicts (E0502) because the mutable borrow is live across the loop. The concept cites E0596 (cannot borrow immutable binding as mutable) when the actual diagnostic is E0502 (cannot borrow `data` as mutable because it is also borrowed as immutable); it frames the issue as mere read-only access rather than a live shared borrow conflict, which is the real mechanism. The paradigm sentence is a mechanical restatement ('mutating needs &mut') rather than the memory-safety philosophy the reference captures — the many-readers-or-one-writer rule eliminating iterator invalidation without runtime checks. The trap is serviceable and C-flavored but misses the sharper insight that a C dev expects append-during-iteration to be fine when capacity suffices; 'writing through' an iterator is a different and less apt misconception for a `push` anchor."
+        },
+        "winner": "MODEL_B",
+        "verdict_summary": "Model A emitted raw chain-of-thought and no JSON, failing every criterion. Model B returned a well-formed, constraint-compliant schema and identifies that the loop's borrow blocks `push`, but misattributes the error to E0596 instead of E0502, implies `&mut` would fix it (it would not), and offers a shallow paradigm statement. Model B wins decisively despite notable technical imprecision."
+      }
+    },
+    {
+      "id": "rtc-val-0004",
+      "category": "val-lifetimes",
+      "evaluated_by_model": "claude-opus-5",
+      "evaluation": {
+        "model_a_scores": {
+          "schema_compliance": 0,
+          "surface_mapping": 0,
+          "concept_explanation": 0,
+          "paradigm_principle": 0,
+          "trap_insight": 0,
+          "total_score": 0,
+          "critique": "Model A produced no answer at all — only truncated internal deliberation about the prompt format. No JSON object, no surface/concept/paradigm/badge/trap fields, and zero technical content about the dangling borrow at `r = &v`. It is a total failure on every criterion: unparseable, uninformative, and self-referential about instructions rather than the Rust code."
+        },
+        "model_b_scores": {
+          "schema_compliance": 9,
+          "surface_mapping": 3,
+          "concept_explanation": 5,
+          "paradigm_principle": 7,
+          "trap_insight": 5,
+          "total_score": 29,
+          "critique": "Model B emits a well-formed single-line JSON object with all five required keys, correct badge 'C', a one-sentence paradigm under 25 words, and a trap that begins with 'A C dev' and fits the length cap — schema handling is near-perfect. Technically it is weaker: the surface line maps to heap free/NULL-ing (`int *r = buf; free(buf); r = NULL;`) rather than the actual stack-scope case (`int v[1]` inside a block), and the Rust side (`let mut r = &mut vec![1];`) is unrelated to the anchored statement and fails to state the key outcome — compile-time rejection. The concept correctly notes `v` dies at the inner brace and that this is a compile error, but garbles the causality ('r is only read afterwards, so assigning &v ... is a compile error') and cites the wrong diagnostic (E0594 is assignment-to-immutable; the real one is E0597, `v` does not live long enough). Paradigm is sound and compiler-centric though it stops short of naming dangling pointers/UB elimination. The trap is on-theme but targets 'assigned, not overwritten' reasoning rather than the sharper C expectation of compiling and reading stale stack memory."
+        },
+        "winner": "MODEL_B",
+        "verdict_summary": "Model A returned no usable output — only truncated reasoning about the prompt — scoring zero across all criteria. Model B returned schema-valid JSON with the correct badge and a reasonable paradigm statement, though its surface mapping drifts to heap free() instead of stack scope exit and it cites the wrong error code (E0594 instead of E0597). Model B wins decisively on availability and partial correctness."
+      }
+    }
+  ],
+  "errors": []
+}
